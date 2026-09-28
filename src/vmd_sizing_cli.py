@@ -124,7 +124,7 @@ def run_vmd_sizing(
     org_model_path:     该动作对应的“动作制作用”原始模型 (.pmx)，单个或列表
     rep_model_path:     要套用到的目标模型 (.pmx)，单个或列表
     output_vmd_path:    输出文件路径，不填则按原版规则自动生成到 motion 同目录
-    detail_stance_flg:  是否启用“站姿追加修正”（细节骨骼追加修正），默认 True
+    detail_stance_flg:  是否启用“姿势追加修正”（细节骨骼追加修正），默认 True
     twist_flg:          是否启用“扭转分散”，默认 True
     arm_process_flg_avoidance: 是否启用手臂刚体接触规避
     avoidance_target_list:     规避目标刚体名称列表
@@ -281,7 +281,7 @@ def _build_arg_parser():
     parser.add_argument("--output", action="append", default=None,
                          help="输出文件路径，不填则自动生成，与 --motion 一一对应")
     parser.add_argument("--no_detail_stance", action="store_true",
-                         help="关闭“站姿追加修正”（细节骨骼追加修正），默认开启")
+                         help="关闭“姿势追加修正”（细节骨骼追加修正），默认开启")
     parser.add_argument("--no_twist", action="store_true",
                          help="关闭“扭转分散”，默认开启")
     parser.add_argument("--avoidance", action="store_true", help="启用手臂刚体接触规避")

@@ -68,9 +68,9 @@ class SizingWorkerThread(BaseWorkerThread):
                     # 第1组动作与模型
                     self.frame.file_panel_ctrl.tree_process_dict[proccess_key] = {"移動縮尺補正": False}
 
-                    total_process += 2                                                                                      # 基本修正・手臂站姿修正
+                    total_process += 2                                                                                      # 基本修正・手臂姿势修正
                     if self.frame.file_panel_ctrl.file_set.org_model_file_ctrl.title_parts_ctrl.GetValue() > 0:
-                        total_process += len(self.frame.file_panel_ctrl.file_set.get_selected_stance_details())             # 站姿追加修正
+                        total_process += len(self.frame.file_panel_ctrl.file_set.get_selected_stance_details())             # 姿势追加修正
                         self.frame.file_panel_ctrl.tree_process_dict[proccess_key]["スタンス追加補正"] = {}
 
                         for v in self.frame.file_panel_ctrl.file_set.get_selected_stance_details():
@@ -120,9 +120,9 @@ class SizingWorkerThread(BaseWorkerThread):
                     if not self.frame.camera_panel_ctrl.camera_only_flg_ctrl.GetValue():
                         self.frame.file_panel_ctrl.tree_process_dict[proccess_key] = {"移動縮尺補正": False}
 
-                        total_process += 2                                                                          # 基本修正・手臂站姿修正
+                        total_process += 2                                                                          # 基本修正・手臂姿势修正
                         if file_set.org_model_file_ctrl.title_parts_ctrl.GetValue() > 0:
-                            total_process += len(file_set.get_selected_stance_details())                            # 站姿追加修正
+                            total_process += len(file_set.get_selected_stance_details())                            # 姿势追加修正
                             self.frame.file_panel_ctrl.tree_process_dict[proccess_key]["スタンス追加補正"] = {}
 
                             for v in file_set.get_selected_stance_details():

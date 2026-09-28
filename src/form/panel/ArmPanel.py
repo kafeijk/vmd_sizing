@@ -310,7 +310,7 @@ class ArmPanel(BasePanel):
             
         if len(disable_arm_model_names) > 0 and not self.arm_check_skip_flg_ctrl.GetValue():
             # 存在手臂不可用模型时，显示对话框
-            with wx.MessageDialog(self, "由于下列模型中包含「腕IK」之类的字符串，相应文件集的手臂相关处理\n（手臂站姿修正・扭转分散・接触规避・位置对齐）将就这样被跳过。\n" \
+            with wx.MessageDialog(self, "由于下列模型中包含「腕IK」之类的字符串，相应文件集的手臂相关处理\n（手臂姿势修正・扭转分散・接触规避・位置对齐）将就这样被跳过。\n" \
                                   + "若将手臂检查跳过FLG设为ON，则会强制执行手臂相关处理。\n※但即使结果变得异常，也不在支持范围内。\n" \
                                   + "是否要将手臂检查跳过FLG设为ON？ \n\n{0}".format('\n'.join(disable_arm_model_names)), style=wx.YES_NO | wx.ICON_WARNING) as dialog:
                 if dialog.ShowModal() == wx.ID_NO:

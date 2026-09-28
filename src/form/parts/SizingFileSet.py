@@ -38,14 +38,14 @@ class SizingFileSet():
                                                           is_aster=True, is_save=False, set_no=set_no)
         self.set_sizer.Add(self.motion_vmd_file_ctrl.sizer, 1, wx.EXPAND, 0)
 
-        # 源模型的站姿细节还原标志
-        detail_stance_flg_ctrl = wx.CheckBox(panel, wx.ID_ANY, u"站姿追加修正", wx.DefaultPosition, wx.DefaultSize, 0)
-        detail_stance_flg_ctrl.SetToolTip(u"勾选后可以追加进行更细致的站姿修正。\n修正内容的详情请点击旁边的「＊」按钮查看。")
+        # 源模型的姿势细节还原标志
+        detail_stance_flg_ctrl = wx.CheckBox(panel, wx.ID_ANY, u"姿势追加修正", wx.DefaultPosition, wx.DefaultSize, 0)
+        detail_stance_flg_ctrl.SetToolTip(u"勾选后可以追加进行更细致的姿势修正。\n修正内容的详情请点击旁边的「＊」按钮查看。")
         detail_stance_flg_ctrl.Bind(wx.EVT_CHECKBOX, self.set_output_vmd_path)
 
-        # 站姿修正
+        # 姿势修正
         detail_btn_ctrl = wx.Button(panel, wx.ID_ANY, u"＊", wx.DefaultPosition, (20, 20), 0)
-        detail_btn_ctrl.SetToolTip("可查看站姿追加修正的具体项目，并进行取舍选择。")
+        detail_btn_ctrl.SetToolTip("可查看姿势追加修正的具体项目，并进行取舍选择。")
         detail_btn_ctrl.Bind(wx.EVT_BUTTON, self.select_detail)
 
         # 源模型PMX文件控件
@@ -79,7 +79,7 @@ class SizingFileSet():
 
     def select_detail(self, event: wx.Event):
 
-        with wx.MultiChoiceDialog(self.panel, "站姿追加修正中，仅执行已勾选的修正项目", caption="站姿追加修正选择", \
+        with wx.MultiChoiceDialog(self.panel, "姿势追加修正中，仅执行已勾选的修正项目", caption="姿势追加修正选择", \
                                   choices=self.STANCE_DETAIL_CHOICES, style=wx.CHOICEDLG_STYLE) as choiceDialog:
 
             choiceDialog.SetSelections(self.selected_stance_details)

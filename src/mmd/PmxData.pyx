@@ -1210,7 +1210,7 @@ cdef class PmxModel:
 
         target_bones = ["左腕", "左ひじ", "左手首", "右腕", "右ひじ", "右手首"]
 
-        cannot_sizing = "将跳过手臂相关处理。\n如需执行手臂相关处理（手臂站姿修正・扭转分散・接触规避・位置对齐），\n请在手臂标签页将「跳过检查」开关设为ON后重新运行。"
+        cannot_sizing = "将跳过手臂相关处理。\n如需执行手臂相关处理（手臂姿势修正・扭转分散・接触规避・位置对齐），\n请在手臂标签页将「跳过检查」开关设为ON后重新运行。"
 
         if not set(target_bones).issubset(self.bones.keys()):
             logger.warning("由于手臂・肘・手腕的左右骨骼不完整，%s\n模型: %s", cannot_sizing, self.name, decoration=MLogger.DECORATION_BOX)

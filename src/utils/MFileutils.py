@@ -212,7 +212,7 @@ def get_output_morph_path(base_file_path: str, org_pmx_path: str, rep_pmx_path: 
 # 生成VMD输出文件路径
 # base_file_path: 动作VMD路径（含通配符）
 # rep_pmx_path: 目标模型PMX路径
-# detail_stance_flg: 站姿细节还原开关
+# detail_stance_flg: 姿势细节还原开关
 # twist_flg: 扭转分散
 # arm_process_flg_avoidance: 接触规避
 # arm_process_flg_alignment: 手腕位置对齐
@@ -238,7 +238,7 @@ def get_output_vmd_path(base_file_path: str, rep_pmx_path: str, detail_stance_fl
 
     # 表情
 
-    # 站姿追加修正
+    # 姿势追加修正
     # 扭转分散
     # 腕
     suffix = "{0}{1}{2}{3}{4}".format(

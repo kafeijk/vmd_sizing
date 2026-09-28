@@ -81,7 +81,7 @@ cdef class StanceService():
             logger.copy(self.options)
             data_set = self.options.data_set_list[data_set_idx]
 
-            # 执行站姿追加修正的情况
+            # 执行姿势追加修正的情况
             if data_set.detail_stance_flg:
                 if "センターXZ補正" in data_set.selected_stance_details:
                     # センターXZ修正
@@ -2990,7 +2990,7 @@ cdef class StanceService():
             logger.test("f: %s, 近似度: %s", bf.fno, uad)
             if uad < dot_limit:
                 # 内積が離れすぎてたらNG
-                logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
+                logger.warning("【No.%s】第%s帧:%s姿势修正失败: 角度:%s, 近似度: %s", \
                                (data_set_idx + 1), bf.fno, from_bone_name, from_rotation.toEulerAngles4MMD().to_log(), round(uad, 5))
             else:
                 # 内積の差が小さい場合、回転適用
@@ -3114,7 +3114,7 @@ cdef class StanceService():
                 # 子として肩の角度調整
                 self.adjust_rotation_by_parent(data_set_idx, data_set, shoulder_name, shoulder_p_name)
 
-                logger.info("%s站姿修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
+                logger.info("%s姿势修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
                 prev_fno = 0
                 # 肩P、肩、腕の全てのキーフレリスト
@@ -3184,7 +3184,7 @@ cdef class StanceService():
                         logger.debug("f: %s, uad: %s, org: %s, result: %s", bf.fno, uad, org_bf.rotation.toEulerAngles4MMD(), new_shoulder_qq.toEulerAngles4MMD())
                         if uad < min(0.6, ratio):
                             # 内積が離れすぎてたらNG
-                            logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
+                            logger.warning("【No.%s】第%s帧:%s姿势修正失败: 角度:%s, 近似度: %s", \
                                         (data_set_idx + 1), bf.fno, shoulder_name, new_shoulder_qq.toEulerAngles4MMD().to_log(), round(uad, 5))
                             bf.rotation = org_bf.rotation
                         else:
@@ -3198,13 +3198,13 @@ cdef class StanceService():
                     data_set.motion.regist_bf(bf, shoulder_name, bf.fno)
                         
                     if fno // 500 > prev_fno:
-                        logger.count("【No.{0} - {1}站姿修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
+                        logger.count("【No.{0} - {1}姿势修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
                         prev_fno = fno // 500
 
                 # 子の角度調整
                 self.adjust_rotation_by_parent(data_set_idx, data_set, arm_name, shoulder_name)
 
-                logger.info("%s站姿修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
+                logger.info("%s姿势修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
                 return PROCESS_FINISH
             else:
@@ -3270,7 +3270,7 @@ cdef class StanceService():
                     # 肩の傾きが遠い場合
                     self.adjust_shoulder_stance_far(data_set_idx, shoulder_p_name, shoulder_name, arm_name, 0.4, is_shoulder_p)
                 else:
-                    logger.warning("%s的初始站姿角度差异较大，肩部修正的结果可能出现异常【No.%s】", shoulder_name, (data_set_idx + 1))
+                    logger.warning("%s的初始姿势角度差异较大，肩部修正的结果可能出现异常【No.%s】", shoulder_name, (data_set_idx + 1))
                     self.adjust_shoulder_stance_far(data_set_idx, shoulder_p_name, shoulder_name, arm_name, 0, is_shoulder_p)
                 
                 return PROCESS_FINISH
@@ -3346,7 +3346,7 @@ cdef class StanceService():
         # 子として肩の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, shoulder_name, shoulder_p_name)
 
-        logger.info("%s站姿修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s姿势修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         prev_fno = 0
         # 肩P、肩、腕の全てのキーフレリスト
@@ -3416,7 +3416,7 @@ cdef class StanceService():
                 logger.test("f: %s, uad: %s, org: %s, result: %s", bf.fno, uad, org_bf.rotation.toEulerAngles4MMD(), new_shoulder_qq.toEulerAngles4MMD())
                 if uad < dot_limit:
                     # 内積が離れすぎてたらNG
-                    logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
+                    logger.warning("【No.%s】第%s帧:%s姿势修正失败: 角度:%s, 近似度: %s", \
                                    (data_set_idx + 1), bf.fno, shoulder_name, new_shoulder_qq.toEulerAngles4MMD().to_log(), round(uad, 5))
                     bf.rotation = org_bf.rotation
                 else:
@@ -3430,13 +3430,13 @@ cdef class StanceService():
             data_set.motion.regist_bf(bf, shoulder_name, bf.fno)
                 
             if fno // 500 > prev_fno:
-                logger.count("【No.{0} - {1}站姿修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
+                logger.count("【No.{0} - {1}姿势修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
                 prev_fno = fno // 500
 
         # 子の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, arm_name, shoulder_name)
 
-        logger.info("%s站姿修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s姿势修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         return True
 
@@ -3533,7 +3533,7 @@ cdef class StanceService():
         # 子として肩の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, shoulder_name, shoulder_p_name)
 
-        logger.info("%s站姿修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s姿势修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         prev_fno = 0
         # 肩P、肩、腕の全てのキーフレリスト
@@ -3551,13 +3551,13 @@ cdef class StanceService():
             data_set.motion.regist_bf(shoulder_bf, shoulder_name, fno)
                 
             if fno // 500 > prev_fno:
-                logger.count("【No.{0} - {1}站姿修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
+                logger.count("【No.{0} - {1}姿势修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
                 prev_fno = fno // 500
 
         # 子の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, arm_name, shoulder_name)
 
-        logger.info("%s站姿修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s姿势修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         return True
 
@@ -3670,7 +3670,7 @@ cdef class StanceService():
             logger.test("f: %s, uad: %s, org: %s, result: %s", bf.fno, uad, org_bf.rotation.toEulerAngles4MMD(), from_rotation.toEulerAngles4MMD())
             if uad < dot_limit:
                 # 内積が離れすぎてたらNG
-                logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
+                logger.warning("【No.%s】第%s帧:%s姿势修正失败: 角度:%s, 近似度: %s", \
                                (data_set_idx + 1), bf.fno, from_bone_name, from_rotation.toEulerAngles4MMD().to_log(), round(uad, 5))
             else:
                 # 内積の差が小さい場合、回転適用
@@ -3790,7 +3790,7 @@ cdef class StanceService():
     cdef bint adjust_arm_stance(self, int data_set_idx, MOptionsDataSet data_set):
         cdef dict arm_diff_qq_dic
 
-        logger.info("手臂站姿修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("手臂姿势修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
         
         # 腕のスタンス差
         arm_diff_qq_dic = self.calc_arm_stance(data_set, data_set_idx)
@@ -3842,7 +3842,7 @@ cdef class StanceService():
 
                         bf.rotation = rep_qq
                 
-                logger.info("手臂站姿修正【No.%s - %s】", (data_set_idx + 1), bone_name)
+                logger.info("手臂姿势修正【No.%s - %s】", (data_set_idx + 1), bone_name)
 
             return True
         except MKilledException as ke:
@@ -3873,7 +3873,7 @@ cdef class StanceService():
                         else:
                             bf.rotation = arm_diff_qq_dic[bone_name]["from"].inverted() * bf.rotation * arm_diff_qq_dic[bone_name]["to"]
                 
-                logger.info("手臂站姿修正【No.%s - %s】", (data_set_idx + 1), bone_name)
+                logger.info("手臂姿势修正【No.%s - %s】", (data_set_idx + 1), bone_name)
                 logger.test("from: %s", arm_diff_qq_dic[bone_name]["from"].toEulerAngles())
                 logger.test("to: %s", arm_diff_qq_dic[bone_name]["to"].toEulerAngles())
 

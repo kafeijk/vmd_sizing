@@ -384,7 +384,7 @@ class BulkPanel(BasePanel):
                         detail_stance_list.append("中心Y补正")
                     detail_stance_txt = ", ".join(detail_stance_list)
 
-                    service_data_txt = f"{service_data_txt}　　站姿追加修正有无: {detail_stance_txt}\n"
+                    service_data_txt = f"{service_data_txt}　　姿势追加修正有无: {detail_stance_txt}\n"
 
                     twist_txt = "有" if separate_twist_datas[0] == 1 else "无"
                     service_data_txt = f"{service_data_txt}　　扭转分散有无: {twist_txt}\n"
@@ -564,7 +564,7 @@ class BulkPanel(BasePanel):
                         stance_toe_datas[0] | stance_toe_ik_datas[0] | stance_shoulder_datas[0] | stance_center_y_datas[0]
                     )
 
-                    # 站姿追加修正
+                    # 姿势追加修正
                     self.frame.file_panel_ctrl.file_set.selected_stance_details = []
                     if stance_center_xz_datas[0] == 1:
                         self.frame.file_panel_ctrl.file_set.selected_stance_details.append(0)
@@ -648,7 +648,7 @@ class BulkPanel(BasePanel):
                         stance_toe_datas[0] | stance_toe_ik_datas[0] | stance_shoulder_datas[0] | stance_center_y_datas[0]
                     )
 
-                    # 站姿追加修正
+                    # 姿势追加修正
                     self.frame.multi_panel_ctrl.file_set_list[now_motion_idx - 1].selected_stance_details = []
                     if stance_center_xz_datas[0] == 1:
                         self.frame.multi_panel_ctrl.file_set_list[now_motion_idx - 1].selected_stance_details.append(0)

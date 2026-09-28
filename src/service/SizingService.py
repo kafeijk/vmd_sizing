@@ -45,10 +45,10 @@ class SizingService():
                                             trace_model=os.path.basename(data_set.camera_org_model.path), model_name=data_set.camera_org_model.name) # noqa
                     service_data_txt = "{service_data_txt}　　Y偏移: {camera_offset_y}\n".format(service_data_txt=service_data_txt,
                                             camera_offset_y=data_set.camera_offset_y) # noqa
-                service_data_txt = "{service_data_txt}　　站姿追加修正有无: {detail_stance_flg}\n".format(service_data_txt=service_data_txt,
+                service_data_txt = "{service_data_txt}　　姿势追加修正有无: {detail_stance_flg}\n".format(service_data_txt=service_data_txt,
                                         detail_stance_flg=data_set.detail_stance_flg) # noqa
                 if data_set.detail_stance_flg:
-                    # 存在站姿追加修正时，显示其列表
+                    # 存在姿势追加修正时，显示其列表
                     service_data_txt = "{service_data_txt}　　　　{detail_stance_flg}\n".format(service_data_txt=service_data_txt,
                                             detail_stance_flg=", ".join(data_set.selected_stance_details)) # noqa
                     
@@ -116,7 +116,7 @@ class SizingService():
                 if not MoveService(self.options).execute():
                     return False
 
-                # 站姿修正
+                # 姿势修正
                 if not StanceService(self.options).execute():
                     return False
 
