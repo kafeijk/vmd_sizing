@@ -64,7 +64,7 @@ class ConvertVmdService():
             bone_fpath = "{0}\\{1}_bone_{2:%Y%m%d_%H%M%S}.vmd".format(motion_csv_dir_path, motion_csv_file_name, dt_now)
 
             # ボーンCSV読み込み
-            with open(self.options.bone_csv_path, encoding='cp932', mode='r') as f:
+            with open(self.options.bone_csv_path, encoding=MFileUtils.get_text_encoding(self.options.bone_csv_path), mode='r') as f:
                 reader = csv.reader(f)
                 next(reader)  # 跳过表头
 
@@ -177,7 +177,7 @@ class ConvertVmdService():
                 bone_fpath = "{0}\\{1}_morph_{2:%Y%m%d_%H%M%S}.vmd".format(motion_csv_dir_path, motion_csv_file_name, dt_now)
 
             # モーフCSV読み込み
-            with open(self.options.morph_csv_path, encoding='cp932', mode='r') as f:
+            with open(self.options.morph_csv_path, encoding=MFileUtils.get_text_encoding(self.options.morph_csv_path), mode='r') as f:
                 reader = csv.reader(f)
                 next(reader)  # 跳过表头
 
@@ -254,7 +254,7 @@ class ConvertVmdService():
             camera_motion = VmdMotion()
 
             # カメラCSV読み込み
-            with open(self.options.camera_csv_path, encoding='cp932', mode='r') as f:
+            with open(self.options.camera_csv_path, encoding=MFileUtils.get_text_encoding(self.options.camera_csv_path), mode='r') as f:
                 reader = csv.reader(f)
                 next(reader)  # 跳过表头
 

@@ -173,21 +173,29 @@ class BulkPanel(BasePanel):
             logger.warning("文件标签页的「待适配动作VMD/VPD」为空，因此中断处理。", decoration=MLogger.DECORATION_BOX)
             return
 
-        save_key = ["グループNo(複数人モーションは同じNo)", "調整対象モーションVMD/VPD(フルパス)", "モーション作成元モデルPMX(フルパス)", "モーション変換先モデルPMX(フルパス)", \
-                    "センターXZ補正(0:無効、1:有効)", "上半身補正(0:無効、1:有効)", "下半身補正(0:無効、1:有効)", "足ＩＫ補正(0:無効、1:有効)", "つま先補正(0:無効、1:有効)", \
-                    "つま先ＩＫ補正(0:無効、1:有効)", "肩補正(0:無効、1:有効)", "センターY補正(0:無効、1:有効)", "捩り分散(0:なし、1:あり)", "モーフ置換(元:先:大きさ;)", "接触回避(0:なし、1:あり)", \
-                    "接触回避剛体(剛体名;)", "位置合わせ(0:なし、1:あり)", "指位置合わせ(0:なし、1:あり)", "床位置合わせ(0:なし、1:あり)", "手首の距離", "指の距離", "床との距離", \
-                    "腕チェックスキップ(0:なし、1:あり)", "全移動量補正値", "足ＩＫオフセット", "カメラモーションVMD(フルパス、グループ1件目のみ)", "距離可動範囲", "カメラ作成元モデルPMX(フルパス)", "全長Yオフセット"]
+        # 表头（中文）。列顺序与原版一致，因此旧版日文表头 CSV 仍可正常读取（按列号定位）。
+        save_key = ["分组No(多人动作为相同No)", "适配对象动作VMD/VPD(完整路径)", "动作源模型PMX(完整路径)", "动作目标模型PMX(完整路径)", \
+                    "中心XZ补正(0:无效、1:有效)", "上半身补正(0:无效、1:有效)", "下半身补正(0:无效、1:有效)", "足IK补正(0:无效、1:有效)", "脚尖补正(0:无效、1:有效)", \
+                    "脚尖IK补正(0:无效、1:有效)", "肩部补正(0:无效、1:有效)", "中心Y补正(0:无效、1:有效)", "扭转分散(0:无、1:有)", "表情替换(源:目标:大小;)", "接触规避(0:无、1:有)", \
+                    "接触规避刚体(刚体名;)", "手腕位置对齐(0:无、1:有)", "手指位置对齐(0:无、1:有)", "地面位置对齐(0:无、1:有)", "手腕距离", "手指距离", "与地面距离", \
+                    "跳过手臂检查(0:无、1:有)", "整体移动量补正值", "足IK偏移值", "相机动作VMD(完整路径、仅分组第1条)", "距离可动范围", "相机源模型PMX(完整路径)", "全长Y偏移"]
         
-        output_path = os.path.join(os.path.dirname(self.frame.file_panel_ctrl.file_set.motion_vmd_file_ctrl.path()), f'一括サイジング用データ_{datetime.now():%Y%m%d_%H%M%S}.csv')
+        output_path = os.path.join(os.path.dirname(self.frame.file_panel_ctrl.file_set.motion_vmd_file_ctrl.path()), f'批量适配数据_{datetime.now():%Y%m%d_%H%M%S}.csv')
 
-        with open(output_path, 'w', encoding='cp932', newline='') as f:
+        save_data_list = [self.create_save_data(self.frame.file_panel_ctrl.file_set, 0, save_key)]
+        for multi_idx, file_set in enumerate(self.frame.multi_panel_ctrl.file_set_list):
+            save_data_list.append(self.create_save_data(file_set, multi_idx + 1, save_key))
+
+        # 能用 GBK 就用 GBK（中文 Excel 默认），装不下的字符则改用 UTF-8(BOM)
+        output_encoding = MFileUtils.get_output_encoding(
+            save_key + [str(v) for d in save_data_list for v in d.values()]
+        )
+
+        with open(output_path, 'w', encoding=output_encoding, newline='') as f:
             writer = csv.DictWriter(f, save_key)
             writer.writeheader()
-            writer.writerow(self.create_save_data(self.frame.file_panel_ctrl.file_set, 0, save_key))
-        
-            for multi_idx, file_set in enumerate(self.frame.multi_panel_ctrl.file_set_list):
-                writer.writerow(self.create_save_data(file_set, multi_idx + 1, save_key))
+            for save_data in save_data_list:
+                writer.writerow(save_data)
 
         self.frame.sound_finish()
         event.Skip()
@@ -273,7 +281,7 @@ class BulkPanel(BasePanel):
             return
 
         result = True
-        with open(self.bulk_csv_file_ctrl.path(), encoding='cp932', mode='r') as f:
+        with open(self.bulk_csv_file_ctrl.path(), encoding=MFileUtils.get_text_encoding(self.bulk_csv_file_ctrl.path()), mode='r') as f:
             reader = csv.reader(f)
             next(reader)  # 跳过表头
             
@@ -282,35 +290,35 @@ class BulkPanel(BasePanel):
             service_data_txt = ""
             for ridx, rows in enumerate(reader):
                 row_no = ridx
-                group_no_result, group_no = self.read_csv_row(rows, row_no, 0, "グループNo", True, int, r"\d+", "仅数值", None)
-                org_motion_result, org_motion_path = self.read_csv_row(rows, row_no, 1, "調整対象モーションVMD/VPD", True, str, None, None, (".vmd", ".vpd"))
-                org_model_result, org_model_path = self.read_csv_row(rows, row_no, 2, "モーション作成元モデルPMX", True, str, None, None, (".pmx"))
-                rep_model_result, rep_model_path = self.read_csv_row(rows, row_no, 3, "モーション変換先モデルPMX", True, str, None, None, (".pmx"))
-                stance_center_xz_result, stance_center_xz_datas = self.read_csv_row(rows, row_no, 4, "センターXZ補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_upper_result, stance_upper_datas = self.read_csv_row(rows, row_no, 5, "上半身補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_lower_result, stance_lower_datas = self.read_csv_row(rows, row_no, 6, "下半身補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_leg_ik_result, stance_leg_ik_datas = self.read_csv_row(rows, row_no, 7, "足ＩＫ補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_toe_result, stance_toe_datas = self.read_csv_row(rows, row_no, 8, "つま先補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_toe_ik_result, stance_toe_ik_datas = self.read_csv_row(rows, row_no, 9, "つま先ＩＫ補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_shoulder_result, stance_shoulder_datas = self.read_csv_row(rows, row_no, 10, "肩補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_center_y_result, stance_center_y_datas = self.read_csv_row(rows, row_no, 11, "センターY補正", True, int, r"^(0|1)$", "0 或 1", None)
-                separate_twist_result, separate_twist_datas = self.read_csv_row(rows, row_no, 12, "捩り分散", True, int, r"^(0|1)$", "0 或 1", None)
-                morph_result, morph_datas = self.read_csv_row(rows, row_no, 13, "モーフ置換", False, str, r"[^\:]+\:[^\:]+\:\d+\.?\d*\;", "源:目标:大小;", None)
-                arm_avoidance_result, arm_avoidance_datas = self.read_csv_row(rows, row_no, 14, "接触回避", True, int, r"^(0|1)$", "0 或 1", None)
-                avoidance_name_result, avoidance_name_datas = self.read_csv_row(rows, row_no, 15, "接触回避剛体", False, str, r"[^\;]+\;", "刚体名;", None)
-                arm_alignment_result, arm_alignment_datas = self.read_csv_row(rows, row_no, 16, "位置合わせ", True, int, r"^(0|1)$", "0 或 1", None)
-                finger_alignment_result, finger_alignment_datas = self.read_csv_row(rows, row_no, 17, "指位置合わせ", False, int, r"^(0|1)$", "0 或 1", None)
-                floor_alignment_result, floor_alignment_datas = self.read_csv_row(rows, row_no, 18, "床位置合わせ", False, int, r"^(0|1)$", "0 或 1", None)
-                arm_alignment_length_result, arm_alignment_length_datas = self.read_csv_row(rows, row_no, 19, "手首の距離", False, float, None, None, None)
-                finger_alignment_length_result, finger_alignment_length_datas = self.read_csv_row(rows, row_no, 20, "指の距離", False, float, None, None, None)
-                floor_alignment_length_result, floor_alignment_length_datas = self.read_csv_row(rows, row_no, 21, "床との距離", False, float, None, None, None)
-                arm_check_skip_result, arm_check_skip_datas = self.read_csv_row(rows, row_no, 22, "腕チェックスキップ", True, int, r"^(0|1)$", "0 或 1", None)
-                move_correction_result, move_correction_data = self.read_csv_row(rows, row_no, 23, "全体移動量補正", False, float, None, None, None)
-                leg_offset_result, leg_offset_data = self.read_csv_row(rows, row_no, 24, "足ＩＫオフセット値", False, float, None, None, None)
-                org_camera_motion_result, org_camera_motion_path = self.read_csv_row(rows, row_no, 25, "カメラモーションVMD", False, str, None, None, (".vmd"))
-                camera_length_result, camera_length_datas = self.read_csv_row(rows, row_no, 26, "距離稼働範囲", False, float, r"^[1-9]\d*\.?\d*", "1以上", None)
-                org_camera_model_result, org_camera_model_path = self.read_csv_row(rows, row_no, 27, "カメラ作成元モデルPMX", False, str, None, None, (".pmx"))
-                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "全長Yオフセット", False, float, None, None, None)
+                group_no_result, group_no = self.read_csv_row(rows, row_no, 0, "分组No", True, int, r"\d+", "仅数值", None)
+                org_motion_result, org_motion_path = self.read_csv_row(rows, row_no, 1, "适配对象动作VMD/VPD", True, str, None, None, (".vmd", ".vpd"))
+                org_model_result, org_model_path = self.read_csv_row(rows, row_no, 2, "动作源模型PMX", True, str, None, None, (".pmx"))
+                rep_model_result, rep_model_path = self.read_csv_row(rows, row_no, 3, "动作目标模型PMX", True, str, None, None, (".pmx"))
+                stance_center_xz_result, stance_center_xz_datas = self.read_csv_row(rows, row_no, 4, "中心XZ补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_upper_result, stance_upper_datas = self.read_csv_row(rows, row_no, 5, "上半身补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_lower_result, stance_lower_datas = self.read_csv_row(rows, row_no, 6, "下半身补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_leg_ik_result, stance_leg_ik_datas = self.read_csv_row(rows, row_no, 7, "足IK补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_toe_result, stance_toe_datas = self.read_csv_row(rows, row_no, 8, "脚尖补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_toe_ik_result, stance_toe_ik_datas = self.read_csv_row(rows, row_no, 9, "脚尖IK补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_shoulder_result, stance_shoulder_datas = self.read_csv_row(rows, row_no, 10, "肩部补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_center_y_result, stance_center_y_datas = self.read_csv_row(rows, row_no, 11, "中心Y补正", True, int, r"^(0|1)$", "0 或 1", None)
+                separate_twist_result, separate_twist_datas = self.read_csv_row(rows, row_no, 12, "扭转分散", True, int, r"^(0|1)$", "0 或 1", None)
+                morph_result, morph_datas = self.read_csv_row(rows, row_no, 13, "表情替换", False, str, r"[^\:]+\:[^\:]+\:\d+\.?\d*\;", "源:目标:大小;", None)
+                arm_avoidance_result, arm_avoidance_datas = self.read_csv_row(rows, row_no, 14, "接触规避", True, int, r"^(0|1)$", "0 或 1", None)
+                avoidance_name_result, avoidance_name_datas = self.read_csv_row(rows, row_no, 15, "接触规避刚体", False, str, r"[^\;]+\;", "刚体名;", None)
+                arm_alignment_result, arm_alignment_datas = self.read_csv_row(rows, row_no, 16, "手腕位置对齐", True, int, r"^(0|1)$", "0 或 1", None)
+                finger_alignment_result, finger_alignment_datas = self.read_csv_row(rows, row_no, 17, "手指位置对齐", False, int, r"^(0|1)$", "0 或 1", None)
+                floor_alignment_result, floor_alignment_datas = self.read_csv_row(rows, row_no, 18, "地面位置对齐", False, int, r"^(0|1)$", "0 或 1", None)
+                arm_alignment_length_result, arm_alignment_length_datas = self.read_csv_row(rows, row_no, 19, "手腕距离", False, float, None, None, None)
+                finger_alignment_length_result, finger_alignment_length_datas = self.read_csv_row(rows, row_no, 20, "手指距离", False, float, None, None, None)
+                floor_alignment_length_result, floor_alignment_length_datas = self.read_csv_row(rows, row_no, 21, "与地面距离", False, float, None, None, None)
+                arm_check_skip_result, arm_check_skip_datas = self.read_csv_row(rows, row_no, 22, "跳过手臂检查", True, int, r"^(0|1)$", "0 或 1", None)
+                move_correction_result, move_correction_data = self.read_csv_row(rows, row_no, 23, "整体移动量补正值", False, float, None, None, None)
+                leg_offset_result, leg_offset_data = self.read_csv_row(rows, row_no, 24, "足IK偏移值", False, float, None, None, None)
+                org_camera_motion_result, org_camera_motion_path = self.read_csv_row(rows, row_no, 25, "相机动作VMD", False, str, None, None, (".vmd"))
+                camera_length_result, camera_length_datas = self.read_csv_row(rows, row_no, 26, "距离可动范围", False, float, r"^[1-9]\d*\.?\d*", "1以上", None)
+                org_camera_model_result, org_camera_model_path = self.read_csv_row(rows, row_no, 27, "相机源模型PMX", False, str, None, None, (".pmx"))
+                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "全长Y偏移", False, float, None, None, None)
                 
                 result = result & group_no_result & org_motion_result & org_model_result & rep_model_result & stance_center_xz_result \
                     & stance_upper_result & stance_lower_result & stance_leg_ik_result & stance_toe_result & stance_toe_ik_result & stance_shoulder_result \
@@ -359,21 +367,21 @@ class BulkPanel(BasePanel):
                     
                     detail_stance_list = []
                     if stance_center_xz_datas[0] == 1:
-                        detail_stance_list.append("センターXZ補正")
+                        detail_stance_list.append("中心XZ补正")
                     if stance_upper_datas[0] == 1:
-                        detail_stance_list.append("上半身補正")
+                        detail_stance_list.append("上半身补正")
                     if stance_lower_datas[0] == 1:
-                        detail_stance_list.append("下半身補正")
+                        detail_stance_list.append("下半身补正")
                     if stance_leg_ik_datas[0] == 1:
-                        detail_stance_list.append("足ＩＫ補正")
+                        detail_stance_list.append("足IK补正")
                     if stance_toe_datas[0] == 1:
-                        detail_stance_list.append("つま先補正")
+                        detail_stance_list.append("脚尖补正")
                     if stance_toe_ik_datas[0] == 1:
-                        detail_stance_list.append("つま先ＩＫ補正")
+                        detail_stance_list.append("脚尖IK补正")
                     if stance_shoulder_datas[0] == 1:
-                        detail_stance_list.append("肩補正")
+                        detail_stance_list.append("肩部补正")
                     if stance_center_y_datas[0] == 1:
-                        detail_stance_list.append("センターY補正")
+                        detail_stance_list.append("中心Y补正")
                     detail_stance_txt = ", ".join(detail_stance_list)
 
                     service_data_txt = f"{service_data_txt}　　站姿追加修正有无: {detail_stance_txt}\n"
@@ -480,7 +488,7 @@ class BulkPanel(BasePanel):
         now_motion_idx = -1
         row_no = 0
         is_buld = False
-        with open(self.bulk_csv_file_ctrl.path(), encoding='cp932', mode='r') as f:
+        with open(self.bulk_csv_file_ctrl.path(), encoding=MFileUtils.get_text_encoding(self.bulk_csv_file_ctrl.path()), mode='r') as f:
             reader = csv.reader(f)
             next(reader)  # 跳过表头
             
@@ -491,7 +499,7 @@ class BulkPanel(BasePanel):
                     # 位于指定行之前的行则跳过
                     continue
 
-                group_no_result, group_no = self.read_csv_row(rows, row_no, 0, "グループNo", True, int, r"\d+", "仅数值", None)
+                group_no_result, group_no = self.read_csv_row(rows, row_no, 0, "分组No", True, int, r"\d+", "仅数值", None)
 
                 if len(group_no) == 0:
                     # 无法取得分组NO，结束
@@ -511,35 +519,35 @@ class BulkPanel(BasePanel):
                 # 批量处理对象
                 is_buld = True
                 
-                group_no_result, group_no = self.read_csv_row(rows, row_no, 0, "グループNo", True, int, r"\d+", "仅数值", None)
-                org_motion_result, org_motion_path = self.read_csv_row(rows, row_no, 1, "調整対象モーションVMD/VPD", True, str, None, None, (".vmd", ".vpd"))
-                org_model_result, org_model_path = self.read_csv_row(rows, row_no, 2, "モーション作成元モデルPMX", True, str, None, None, (".pmx"))
-                rep_model_result, rep_model_path = self.read_csv_row(rows, row_no, 3, "モーション変換先モデルPMX", True, str, None, None, (".pmx"))
-                stance_center_xz_result, stance_center_xz_datas = self.read_csv_row(rows, row_no, 4, "センターXZ補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_upper_result, stance_upper_datas = self.read_csv_row(rows, row_no, 5, "上半身補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_lower_result, stance_lower_datas = self.read_csv_row(rows, row_no, 6, "下半身補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_leg_ik_result, stance_leg_ik_datas = self.read_csv_row(rows, row_no, 7, "足ＩＫ補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_toe_result, stance_toe_datas = self.read_csv_row(rows, row_no, 8, "つま先補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_toe_ik_result, stance_toe_ik_datas = self.read_csv_row(rows, row_no, 9, "つま先ＩＫ補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_shoulder_result, stance_shoulder_datas = self.read_csv_row(rows, row_no, 10, "肩補正", True, int, r"^(0|1)$", "0 或 1", None)
-                stance_center_y_result, stance_center_y_datas = self.read_csv_row(rows, row_no, 11, "センターY補正", True, int, r"^(0|1)$", "0 或 1", None)
-                separate_twist_result, separate_twist_datas = self.read_csv_row(rows, row_no, 12, "捩り分散", True, int, r"^(0|1)$", "0 或 1", None)
-                morph_result, morph_datas = self.read_csv_row(rows, row_no, 13, "モーフ置換", False, str, r"[^\:]+\:[^\:]+\:\d+\.?\d*\;", "源:目标:大小;", None)
-                arm_avoidance_result, arm_avoidance_datas = self.read_csv_row(rows, row_no, 14, "接触回避", True, int, r"^(0|1)$", "0 或 1", None)
-                avoidance_name_result, avoidance_name_datas = self.read_csv_row(rows, row_no, 15, "接触回避剛体", False, str, r"[^\;]+\;", "刚体名;", None)
-                arm_alignment_result, arm_alignment_datas = self.read_csv_row(rows, row_no, 16, "位置合わせ", True, int, r"^(0|1)$", "0 或 1", None)
-                finger_alignment_result, finger_alignment_datas = self.read_csv_row(rows, row_no, 17, "指位置合わせ", False, int, r"^(0|1)$", "0 或 1", None)
-                floor_alignment_result, floor_alignment_datas = self.read_csv_row(rows, row_no, 18, "床位置合わせ", False, int, r"^(0|1)$", "0 或 1", None)
-                arm_alignment_length_result, arm_alignment_length_datas = self.read_csv_row(rows, row_no, 19, "手首の距離", False, float, None, None, None)
-                finger_alignment_length_result, finger_alignment_length_datas = self.read_csv_row(rows, row_no, 20, "指の距離", False, float, None, None, None)
-                floor_alignment_length_result, floor_alignment_length_datas = self.read_csv_row(rows, row_no, 21, "床との距離", False, float, None, None, None)
-                arm_check_skip_result, arm_check_skip_datas = self.read_csv_row(rows, row_no, 22, "腕チェックスキップ", True, int, r"^(0|1)$", "0 或 1", None)
-                move_correction_result, move_correction_data = self.read_csv_row(rows, row_no, 23, "全体移動量補正", False, float, None, None, None)
-                leg_offset_result, leg_offset_data = self.read_csv_row(rows, row_no, 24, "足ＩＫオフセット値", False, float, None, None, None)
-                org_camera_motion_result, org_camera_motion_path = self.read_csv_row(rows, row_no, 25, "カメラモーションVMD", False, str, None, None, (".vmd"))
-                camera_length_result, camera_length_datas = self.read_csv_row(rows, row_no, 26, "距離稼働範囲", False, float, None, None, None)
-                org_camera_model_result, org_camera_model_path = self.read_csv_row(rows, row_no, 27, "カメラ作成元モデルPMX", False, str, None, None, (".pmx"))
-                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "全長Yオフセット", False, float, None, None, None)
+                group_no_result, group_no = self.read_csv_row(rows, row_no, 0, "分组No", True, int, r"\d+", "仅数值", None)
+                org_motion_result, org_motion_path = self.read_csv_row(rows, row_no, 1, "适配对象动作VMD/VPD", True, str, None, None, (".vmd", ".vpd"))
+                org_model_result, org_model_path = self.read_csv_row(rows, row_no, 2, "动作源模型PMX", True, str, None, None, (".pmx"))
+                rep_model_result, rep_model_path = self.read_csv_row(rows, row_no, 3, "动作目标模型PMX", True, str, None, None, (".pmx"))
+                stance_center_xz_result, stance_center_xz_datas = self.read_csv_row(rows, row_no, 4, "中心XZ补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_upper_result, stance_upper_datas = self.read_csv_row(rows, row_no, 5, "上半身补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_lower_result, stance_lower_datas = self.read_csv_row(rows, row_no, 6, "下半身补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_leg_ik_result, stance_leg_ik_datas = self.read_csv_row(rows, row_no, 7, "足IK补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_toe_result, stance_toe_datas = self.read_csv_row(rows, row_no, 8, "脚尖补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_toe_ik_result, stance_toe_ik_datas = self.read_csv_row(rows, row_no, 9, "脚尖IK补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_shoulder_result, stance_shoulder_datas = self.read_csv_row(rows, row_no, 10, "肩部补正", True, int, r"^(0|1)$", "0 或 1", None)
+                stance_center_y_result, stance_center_y_datas = self.read_csv_row(rows, row_no, 11, "中心Y补正", True, int, r"^(0|1)$", "0 或 1", None)
+                separate_twist_result, separate_twist_datas = self.read_csv_row(rows, row_no, 12, "扭转分散", True, int, r"^(0|1)$", "0 或 1", None)
+                morph_result, morph_datas = self.read_csv_row(rows, row_no, 13, "表情替换", False, str, r"[^\:]+\:[^\:]+\:\d+\.?\d*\;", "源:目标:大小;", None)
+                arm_avoidance_result, arm_avoidance_datas = self.read_csv_row(rows, row_no, 14, "接触规避", True, int, r"^(0|1)$", "0 或 1", None)
+                avoidance_name_result, avoidance_name_datas = self.read_csv_row(rows, row_no, 15, "接触规避刚体", False, str, r"[^\;]+\;", "刚体名;", None)
+                arm_alignment_result, arm_alignment_datas = self.read_csv_row(rows, row_no, 16, "手腕位置对齐", True, int, r"^(0|1)$", "0 或 1", None)
+                finger_alignment_result, finger_alignment_datas = self.read_csv_row(rows, row_no, 17, "手指位置对齐", False, int, r"^(0|1)$", "0 或 1", None)
+                floor_alignment_result, floor_alignment_datas = self.read_csv_row(rows, row_no, 18, "地面位置对齐", False, int, r"^(0|1)$", "0 或 1", None)
+                arm_alignment_length_result, arm_alignment_length_datas = self.read_csv_row(rows, row_no, 19, "手腕距离", False, float, None, None, None)
+                finger_alignment_length_result, finger_alignment_length_datas = self.read_csv_row(rows, row_no, 20, "手指距离", False, float, None, None, None)
+                floor_alignment_length_result, floor_alignment_length_datas = self.read_csv_row(rows, row_no, 21, "与地面距离", False, float, None, None, None)
+                arm_check_skip_result, arm_check_skip_datas = self.read_csv_row(rows, row_no, 22, "跳过手臂检查", True, int, r"^(0|1)$", "0 或 1", None)
+                move_correction_result, move_correction_data = self.read_csv_row(rows, row_no, 23, "整体移动量补正值", False, float, None, None, None)
+                leg_offset_result, leg_offset_data = self.read_csv_row(rows, row_no, 24, "足IK偏移值", False, float, None, None, None)
+                org_camera_motion_result, org_camera_motion_path = self.read_csv_row(rows, row_no, 25, "相机动作VMD", False, str, None, None, (".vmd"))
+                camera_length_result, camera_length_datas = self.read_csv_row(rows, row_no, 26, "距离可动范围", False, float, None, None, None)
+                org_camera_model_result, org_camera_model_path = self.read_csv_row(rows, row_no, 27, "相机源模型PMX", False, str, None, None, (".pmx"))
+                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "全长Y偏移", False, float, None, None, None)
                 
                 if now_motion_idx == 0:
                     # 清空多人面板

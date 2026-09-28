@@ -23,6 +23,90 @@ def resource_path(relative):
     return os.path.join(relative)
 
 
+# 文本编码策略（本工具面向中文用户，不再考虑日文 cp932）
+#
+#   【读取】按以下顺序判定，先 UTF-8 后 GBK：
+#       1. BOM（utf-8-sig / utf-16）—— 最可靠，有 BOM 就听它的
+#       2. UTF-8 严格校验 —— 能通过就一定是 UTF-8
+#       3. 其余一律 GBK（gb18030 是 GBK 的超集，先试它，再试 gbk）
+#     注意第 2 步必须排在第 3 步之前：GBK 很宽松，几乎任何字节都能"解"出结果，
+#     若先按 GBK 解，UTF-8 的中文文件会被静默解成乱码；而 UTF-8 通不过的才轮到 GBK。
+#     这不是"谁优先"的偏好问题，是消除歧义的必要条件。
+#
+#   【写出】相反，是 GBK 优先：能装进 GBK 就写 GBK，装不下才写 utf-8-sig。
+#     因为写出的文件主要给中文 Excel 双击打开，GBK 是它的默认编码。
+TEXT_ENCODING_CANDIDATES = ("gb18030", "gbk")
+
+# 既不是 UTF-8、又严格解不出 GBK 时的兜底编码
+DEFAULT_TEXT_ENCODING = "gb18030"
+
+
+# 探测文本文件的字符编码
+#   判定顺序：BOM → UTF-8（严格）→ GB18030 → GBK → 兜底 GB18030
+def get_text_encoding(file_path):
+    try:
+        with open(file_path, "rb") as f:
+            fbytes = f.read()
+    except Exception:
+        return DEFAULT_TEXT_ENCODING
+
+    if not fbytes:
+        return DEFAULT_TEXT_ENCODING
+
+    # 有 BOM 时以 BOM 为准（最可靠）
+    if fbytes[:3] == b"\xef\xbb\xbf":
+        return "utf-8-sig"
+    if fbytes[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return "utf-16"
+
+    # UTF-8 是严格编码，能通过就一定是 UTF-8
+    try:
+        fbytes.decode("utf-8")
+        return "utf-8"
+    except Exception:
+        pass
+
+    # 其余一律按 GBK 处理（gb18030 是 GBK 的超集，先试它）
+    for enc in TEXT_ENCODING_CANDIDATES:
+        try:
+            fbytes.decode(enc)
+            return enc
+        except Exception:
+            continue
+
+    # 兜底：严格解不出来时用替换模式读 GBK，至少不会崩
+    return DEFAULT_TEXT_ENCODING
+
+
+# 读取文本文件（自动探测编码）
+def read_text_file(file_path, encoding=None):
+    enc = encoding if encoding else get_text_encoding(file_path)
+
+    try:
+        with open(file_path, "r", encoding=enc) as f:
+            return f.read()
+    except Exception:
+        # 万一仍失败，则用替换模式读取，避免直接崩溃
+        with open(file_path, "r", encoding=enc, errors="replace") as f:
+            return f.read()
+
+
+# 选择**写出**文本（CSV）用的编码：能用 GBK 就用 GBK（中文 Excel 双击直接能开，
+# 也能容纳日文假名与大多数日文体汉字）；遇到 GBK 装不下的字符（如「・」「ㇰ」这类
+# GBK 未收录的符号）时，自动改用 utf-8-sig（带 BOM，Excel 同样能正确识别）。
+def get_output_encoding(lines):
+    for enc in ("gbk", "utf-8-sig"):
+        try:
+            for line in lines:
+                if line is not None:
+                    str(line).encode(enc)
+            return enc
+        except Exception:
+            continue
+
+    return "utf-8"
+
+
 # 读取文件历史记录
 def read_history(mydir_path):
     # 文件历史记录

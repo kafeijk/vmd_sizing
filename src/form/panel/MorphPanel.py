@@ -381,7 +381,7 @@ class MorphSet():
             # Proceed loading the file chosen by the user
             target_morph_path = fileDialog.GetPath()
             try:
-                with open(target_morph_path, 'r') as f:
+                with open(target_morph_path, 'r', encoding=MFileUtils.get_text_encoding(target_morph_path)) as f:
                     cr = csv.reader(f, delimiter=",", quotechar='"')
                     morph_lines = [row for row in cr]
 
@@ -455,7 +455,7 @@ class MorphSet():
         )
 
         try:
-            with open(output_morph_path, encoding='cp932', mode='w', newline='') as f:
+            with open(output_morph_path, encoding=MFileUtils.get_output_encoding(org_morph_list + rep_morph_list), mode='w', newline='') as f:
                 cw = csv.writer(f, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
 
                 # 原表情行

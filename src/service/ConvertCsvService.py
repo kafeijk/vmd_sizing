@@ -62,14 +62,18 @@ class ConvertCsvService:
                 motion_vmd_dir_path, motion_vmd_file_name, dt_now
             )
 
-            # 为便于用Excel等打开，限定为cp932
-            with open(bone_fpath, encoding="cp932", mode="w") as f:
+            bone_header = (
+                "骨骼名,帧,位置X,位置Y,位置Z,旋转X,旋转Y,旋转Z,【X_x1】,Y_x1,Z_x1,R_x1,【X_y1】,Y_y1,Z_y1,R_y1,【X_x2】,Y_x2,Z_x2,R_x2,【X_y2】,Y_y2,Z_y2,R_y2,"
+                + "【Y_x1】,Z_x1,R_x1,X_y1,【Y_y1】,Z_y1,R_y1,X_x2,【Y_x2】,Z_x2,R_x2,X_y2,【Y_y2】,Z_y2,R_y2,1,【Z_x1】,R_x1,X_y1,Y_y1,【Z_y1】,R_y1,X_x2,Y_x2,【Z_x2】"
+                + ",R_x2,X_y2,Y_y2,【Z_y2】,R_y2,1,0,【R_x1】,X_y1,Y_y1,Z_y1,【R_y1】,X_x2,Y_x2,Z_x2,【R_x2】,X_y2,Y_y2,Z_y2,【R_y2】,01,00,00"
+            )
 
-                s = (
-                    "ボーン名,フレーム,位置X,位置Y,位置Z,回転X,回転Y,回転Z,【X_x1】,Y_x1,Z_x1,R_x1,【X_y1】,Y_y1,Z_y1,R_y1,【X_x2】,Y_x2,Z_x2,R_x2,【X_y2】,Y_y2,Z_y2,R_y2,"
-                    + "【Y_x1】,Z_x1,R_x1,X_y1,【Y_y1】,Z_y1,R_y1,X_x2,【Y_x2】,Z_x2,R_x2,X_y2,【Y_y2】,Z_y2,R_y2,1,【Z_x1】,R_x1,X_y1,Y_y1,【Z_y1】,R_y1,X_x2,Y_x2,【Z_x2】"
-                    + ",R_x2,X_y2,Y_y2,【Z_y2】,R_y2,1,0,【R_x1】,X_y1,Y_y1,Z_y1,【R_y1】,X_x2,Y_x2,Z_x2,【R_x2】,X_y2,Y_y2,Z_y2,【R_y2】,01,00,00"
-                )
+            # 能用 GBK 就用 GBK，装不下的字符（GBK 未收录的符号）则改用 UTF-8(BOM)
+            bone_encoding = MFileUtils.get_output_encoding([bone_header] + list(self.options.motion.bones.keys()))
+
+            with open(bone_fpath, encoding=bone_encoding, mode="w") as f:
+
+                s = bone_header
                 f.write(s)
                 f.write("\n")
 
@@ -98,10 +102,12 @@ class ConvertCsvService:
                 motion_vmd_dir_path, motion_vmd_file_name, dt_now
             )
 
-            # 为便于用Excel等打开，限定为cp932
-            with open(morph_fpath, encoding="cp932", mode="w") as f:
+            # 能用 GBK 就用 GBK，装不下的字符则改用 UTF-8(BOM)
+            morph_encoding = MFileUtils.get_output_encoding(["表情名,帧,大小"] + list(self.options.motion.morphs.keys()))
 
-                s = "モーフ名,フレーム,大きさ"
+            with open(morph_fpath, encoding=morph_encoding, mode="w") as f:
+
+                s = "表情名,帧,大小"
                 f.write(s)
                 f.write("\n")
 
@@ -120,11 +126,11 @@ class ConvertCsvService:
                 motion_vmd_dir_path, motion_vmd_file_name, dt_now
             )
 
-            # 为便于用Excel等打开，限定为cp932
-            with open(camera_fpath, encoding="cp932", mode="w") as f:
+            # 相机 CSV 只有数字，GBK 一定装得下（get_output_encoding 会给出 gbk）
+            with open(camera_fpath, encoding=MFileUtils.get_output_encoding(["帧,位置X"]), mode="w") as f:
 
                 s = (
-                    "フレーム,位置X,位置Y,位置Z,回転X,回転Y,回転Z,距離,視野角,パース,X_x1,Y_x1,Z_x1,R_x1,L_x1,VA_x1,"
+                    "帧,位置X,位置Y,位置Z,旋转X,旋转Y,旋转Z,距离,视场角,透视,X_x1,Y_x1,Z_x1,R_x1,L_x1,VA_x1,"
                     + "X_y1,Y_y1,Z_y1,R_y1,L_y1,VA_y1,X_x2,Y_x2,Z_x2,R_x2,L_x2,VA_x2, X_y2,Y_y2,Z_y2,R_y2,L_y2,VA_y2"
                 )
                 f.write(s)
