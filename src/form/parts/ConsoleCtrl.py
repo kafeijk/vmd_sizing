@@ -14,7 +14,7 @@ class ConsoleCtrl(wx.TextCtrl):
         self.limit_cnt = 10
 
         if logging_level <= MLogger.DEBUG:
-            # デバッグ版は纏めて出力
+            # 调试版汇总输出
             self.limit_cnt = 5000
 
         self.texts = ""
@@ -24,11 +24,11 @@ class ConsoleCtrl(wx.TextCtrl):
             self.texts += text
 
             if len(self.texts) > self.limit_cnt and stack:
-                # 一定文字数を超えた場合にのみ出力
+                # 仅当超过一定字符数时输出
                 wx.CallAfter(self.AppendText, self.texts)
                 self.texts = ""
             elif not stack:
-                # stackではない場合、そのまま出力
+                # 非stack时，直接输出
                 wx.CallAfter(self.AppendText, self.texts)
                 self.texts = ""
 
@@ -39,6 +39,6 @@ class ConsoleCtrl(wx.TextCtrl):
     #     while True:
     #         # super().write(queue.get())
     #         wx.CallAfter(queue.get())
-    #         # 0.1秒待機
+    #         # 等待0.1秒
     #         time.sleep(0.1)
 

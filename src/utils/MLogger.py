@@ -123,7 +123,7 @@ class MLogger():
                 kwargs = {}
                 
             kwargs["level"] = logging.INFO
-            log_msg = "-- {0}フレーム目:終了({1}％){2}".format(fno, round((fno / last_fno) * 100, 3), msg)
+            log_msg = "-- 第{0}帧:完成({1}％){2}".format(fno, round((fno / last_fno) * 100, 3), msg)
             self.print_logger(log_msg, *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
@@ -275,6 +275,11 @@ class MLogger():
 
 @cython.ccall
 def print_message(msg: str, target_level: int):
-    sys.stdout.write(msg + "\n", (target_level < MLogger.INFO))
+    # GUI 运行时 sys.stdout 已被替换为 ConsoleCtrl，其 write(text, stack) 接受第二参数（用于错误高亮）。
+    # 命令行模式下 sys.stdout 是标准 TextIOWrapper，write 只接受一个参数，因此做兼容处理。
+    try:
+        sys.stdout.write(msg + "\n", (target_level < MLogger.INFO))
+    except TypeError:
+        sys.stdout.write(msg + "\n")
 
 

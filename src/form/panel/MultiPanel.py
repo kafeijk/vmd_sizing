@@ -21,22 +21,22 @@ class MultiPanel(BasePanel):
         self.header_panel = wx.Panel(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
         self.header_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.description_txt = wx.StaticText(self.header_panel, wx.ID_ANY, "複数人数モーションなどを比率を合わせてサイジングする事ができます。2人目以降を指定して下さい。" \
-                                             + "\n縮尺を強制的に変えてますので、足などが元モーションからズレる場合があります。" \
-                                             + "\n間違えてファイルセットを追加してしまった場合は、４つのファイル欄をすべて空にしてください。", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.description_txt = wx.StaticText(self.header_panel, wx.ID_ANY, "可以对多人动作等进行按比例适配。请指定第2人及以后的动作数据。" \
+                                             + "\n由于是强制改变缩放比例，腿部等可能会与原动作产生偏移。" \
+                                             + "\n若误添加了文件集，请将4个文件栏全部清空。", wx.DefaultPosition, wx.DefaultSize, 0)
         self.header_sizer.Add(self.description_txt, 0, wx.ALL, 5)
 
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # ファイルセットクリアボタン
-        self.clear_btn_ctrl = wx.Button(self.header_panel, wx.ID_ANY, u"ファイルセットクリア", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.clear_btn_ctrl.SetToolTip(u"既に入力されたデータをすべて空にします。")
+        # 清空文件集按钮
+        self.clear_btn_ctrl = wx.Button(self.header_panel, wx.ID_ANY, u"清空文件集", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.clear_btn_ctrl.SetToolTip(u"清空已输入的所有数据。")
         self.clear_btn_ctrl.Bind(wx.EVT_BUTTON, self.on_clear_set)
         self.btn_sizer.Add(self.clear_btn_ctrl, 0, wx.ALL, 5)
 
-        # ファイルセットクリアボタン
-        self.add_btn_ctrl = wx.Button(self.header_panel, wx.ID_ANY, u"ファイルセット追加", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.add_btn_ctrl.SetToolTip(u"サイジングに必要なファイルセットをパネルに追加します。")
+        # 添加文件集按钮
+        self.add_btn_ctrl = wx.Button(self.header_panel, wx.ID_ANY, u"添加文件集", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.add_btn_ctrl.SetToolTip(u"将适配所需的文件集添加到面板中。")
         self.add_btn_ctrl.Bind(wx.EVT_BUTTON, self.on_add_set)
         self.btn_sizer.Add(self.add_btn_ctrl, 0, wx.ALL, 5)
 
@@ -45,9 +45,9 @@ class MultiPanel(BasePanel):
         self.header_panel.Layout()
         self.sizer.Add(self.header_panel, 0, wx.EXPAND | wx.ALL, 5)
 
-        # ファイルセット
+        # 文件集
         self.file_set_list = []
-        # ファイルセット用基本Sizer
+        # 文件集用基本 Sizer
         self.set_base_sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.scrolled_window = MultiFileSetScrolledWindow(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, \
@@ -67,7 +67,7 @@ class MultiPanel(BasePanel):
         self.set_base_sizer.Add(self.file_set_list[-1].set_sizer, 0, wx.ALL, 5)
         self.set_base_sizer.Layout()
         
-        # スクロールバーの表示のためにサイズ調整
+        # 为显示滚动条而调整尺寸
         self.sizer.Layout()
         # self.sizer.FitInside(self.scrolled_window)
 
@@ -83,11 +83,11 @@ class MultiPanel(BasePanel):
             file_set.org_model_file_ctrl.file_ctrl.SetPath("")
             file_set.output_vmd_file_ctrl.file_ctrl.SetPath("")
 
-    # フォーム無効化
+    # 禁用表单
     def disable(self):
         self.file_set.disable()
 
-    # フォーム無効化
+    # 禁用表单
     def enable(self):
         self.file_set.enable()
 

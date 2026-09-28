@@ -1,12 +1,14 @@
 @echo off
-rem --- 
-rem ---  vmd僨乕僞偺僩儗乕僗儌僨儖傪曄姺
-rem --- 
-
-rem ---  僇儗儞僩僨傿儗僋僩儕傪幚峴愭偵曄峏
+chcp 65001 >nul
+rem ==========================================
+rem ---  VMD适配：启动图形界面（GUI）      ---
+rem ==========================================
 cd /d %~dp0
-
 cls
 
-activate vmdsizing_cython && src\setup.bat && python src\executor.py --out_log 1 --verbose 20 --is_saving 1
+rem --- 切换到项目用的 conda 环境（如路径不同请自行修改）---
+call D:\ProgramData\miniconda\Scripts\activate.bat vmdsizing_cn
 
+python src\executor.py --out_log 1 --verbose 20 --is_saving 1
+
+pause

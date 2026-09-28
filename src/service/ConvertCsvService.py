@@ -23,7 +23,7 @@ class ConvertCsvService:
         logging.basicConfig(level=self.options.logging_level, format="%(message)s [%(module_name)s]")
 
         try:
-            service_data_txt = "CSV変換処理実行\n------------------------\nexeバージョン: {version_name}\n".format(
+            service_data_txt = "CSV转换处理执行\n------------------------\nexe版本: {version_name}\n".format(
                 version_name=self.options.version_name
             )
             service_data_txt = "{service_data_txt}　　VMD: {vmd}\n".format(
@@ -32,37 +32,37 @@ class ConvertCsvService:
 
             logger.info(service_data_txt, decoration=MLogger.DECORATION_BOX)
 
-            # 処理に成功しているか
+            # 处理是否成功
             result = self.convert_csv()
 
             return result
         except SizingException as se:
-            logger.error("CSV変換処理が処理できないデータで終了しました。\n\n%s", se.message, decoration=MLogger.DECORATION_BOX)
+            logger.error("CSV转换处理因无法处理的数据而结束。\n\n%s", se.message, decoration=MLogger.DECORATION_BOX)
         except Exception:
-            logger.critical("CSV変換処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc(), decoration=MLogger.DECORATION_BOX)
+            logger.critical("CSV转换处理因意外错误而结束。\n\n%s", traceback.format_exc(), decoration=MLogger.DECORATION_BOX)
         finally:
             logging.shutdown()
 
-    # CSV変換処理実行
+    # CSV转换处理执行
     def convert_csv(self):
-        # モーションVMDディレクトリパス
+        # 动作VMD目录路径
         motion_vmd_dir_path = MFileUtils.get_dir_path(self.options.motion.path)
-        # モーションVMDファイル名・拡張子
+        # 动作VMD文件名・扩展名
         motion_vmd_file_name, motion_vmd_ext = os.path.splitext(os.path.basename(self.options.motion.path))
 
         dt_now = datetime.now()
 
         if self.options.motion.motion_cnt == self.options.motion.morph_cnt == self.options.motion.camera_cnt == 0:
-            logger.warning("出力可能なモーションデータ（ボーン・モーフ・カメラ）がありません", decoration=MLogger.DECORATION_BOX)
+            logger.warning("没有可输出的动作数据（骨骼・表情・相机）", decoration=MLogger.DECORATION_BOX)
 
         if self.options.motion.motion_cnt > 0:
-            # ボーンモーションがある場合、ボーンモーション出力
+            # 存在骨骼动作时，输出骨骼动作
 
             bone_fpath = "{0}\\{1}_bone_{2:%Y%m%d_%H%M%S}.csv".format(
                 motion_vmd_dir_path, motion_vmd_file_name, dt_now
             )
 
-            # Excel等で読めるよう、cp932限定
+            # 为便于用Excel等打开，限定为cp932
             with open(bone_fpath, encoding="cp932", mode="w") as f:
 
                 s = (
@@ -90,15 +90,15 @@ class ConvertCsvService:
                         f.write(s)
                         f.write("\n")
 
-            logger.info("ボーンモーションCSV: %s", bone_fpath, decoration=MLogger.DECORATION_BOX)
+            logger.info("骨骼动作CSV: %s", bone_fpath, decoration=MLogger.DECORATION_BOX)
 
         if self.options.motion.morph_cnt > 0:
-            # モーフ出力
+            # 表情输出
             morph_fpath = "{0}\\{1}_morph_{2:%Y%m%d_%H%M%S}.csv".format(
                 motion_vmd_dir_path, motion_vmd_file_name, dt_now
             )
 
-            # Excel等で読めるよう、cp932限定
+            # 为便于用Excel等打开，限定为cp932
             with open(morph_fpath, encoding="cp932", mode="w") as f:
 
                 s = "モーフ名,フレーム,大きさ"
@@ -112,15 +112,15 @@ class ConvertCsvService:
                         f.write(s)
                         f.write("\n")
 
-            logger.info("モーフモーションCSV: %s", morph_fpath, decoration=MLogger.DECORATION_BOX)
+            logger.info("表情动作CSV: %s", morph_fpath, decoration=MLogger.DECORATION_BOX)
 
         if self.options.motion.camera_cnt > 0:
-            # カメラ出力
+            # 相机输出
             camera_fpath = "{0}\\{1}_camera_{2:%Y%m%d_%H%M%S}.csv".format(
                 motion_vmd_dir_path, motion_vmd_file_name, dt_now
             )
 
-            # Excel等で読めるよう、cp932限定
+            # 为便于用Excel等打开，限定为cp932
             with open(camera_fpath, encoding="cp932", mode="w") as f:
 
                 s = (
@@ -148,6 +148,6 @@ class ConvertCsvService:
                     f.write(s)
                     f.write("\n")
 
-            logger.info("カメラモーションCSV: %s", camera_fpath, decoration=MLogger.DECORATION_BOX)
+            logger.info("相机动作CSV: %s", camera_fpath, decoration=MLogger.DECORATION_BOX)
 
         return True

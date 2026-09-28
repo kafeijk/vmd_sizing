@@ -23,18 +23,18 @@ class LoadWorkerThread(BaseWorkerThread):
     def thread_event(self):
         start = time.time()
 
-        # メインセットの読み込み
+        # 读取主文件集
         self.result = self.frame.file_panel_ctrl.file_set.load() and self.result
 
-        # 複数セットの読み込み
+        # 读取多个文件集
         for file_set in self.frame.multi_panel_ctrl.file_set_list:
             self.result = file_set.load() and self.result
             
-        # カメラモーションの読み込み
+        # 读取相机动作
         if self.frame.camera_panel_ctrl.camera_vmd_file_ctrl.is_set_path():
             self.result = self.frame.camera_panel_ctrl.camera_vmd_file_ctrl.load() and self.result
         
-        # カメラ元モデルの読み込み
+        # 读取相机源模型
         for camera_set in self.frame.camera_panel_ctrl.camera_set_dict.values():
             if camera_set.camera_model_file_ctrl.is_set_path():
                 self.result = camera_set.camera_model_file_ctrl.load() and self.result

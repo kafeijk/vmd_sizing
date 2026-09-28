@@ -102,11 +102,11 @@ cdef class MVector2D:
         return np.all(np.greater_equal(self.data(), other.data()))
 
     def __add__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.add_float(other)
         elif isinstance(other, MVector2D):
             v = self.add_MVector2D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.add_int(other)
         else:
             v = self.data() + other
@@ -124,11 +124,11 @@ cdef class MVector2D:
         return self.__data + other
 
     def __sub__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.sub_float(other)
         elif isinstance(other, MVector2D):
             v = self.sub_MVector2D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.sub_int(other)
         else:
             v = self.data() - other
@@ -146,11 +146,11 @@ cdef class MVector2D:
         return self.__data - other
 
     def __mul__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mul_float(other)
         elif isinstance(other, MVector2D):
             v = self.mul_MVector2D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mul_int(other)
         else:
             v = self.data() * other
@@ -168,11 +168,11 @@ cdef class MVector2D:
         return self.__data * other
 
     def __truediv__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.truediv_float(other)
         elif isinstance(other, MVector2D):
             v = self.truediv_MVector2D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.truediv_int(other)
         else:
             v = self.data() / other
@@ -190,11 +190,11 @@ cdef class MVector2D:
         return self.__data / other
 
     def __floordiv__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.floordiv_float(other)
         elif isinstance(other, MVector2D):
             v = self.floordiv_MVector2D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.floordiv_int(other)
         else:
             v = self.data() // other
@@ -212,11 +212,11 @@ cdef class MVector2D:
         return self.__data // other
 
     def __mod__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mod_float(other)
         elif isinstance(other, MVector2D):
             v = self.mod_MVector2D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mod_int(other)
         else:
             v = self.data() % other
@@ -441,11 +441,11 @@ cdef class MVector3D:
         return np.all(np.greater_equal(self.data(), other.data()))
 
     def __add__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.add_float(other)
         elif isinstance(other, MVector3D):
             v = self.add_MVector3D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.add_int(other)
         else:
             v = self.data() + other
@@ -463,11 +463,11 @@ cdef class MVector3D:
         return self.__data + other
 
     def __sub__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.sub_float(other)
         elif isinstance(other, MVector3D):
             v = self.sub_MVector3D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.sub_int(other)
         else:
             v = self.data() - other
@@ -485,11 +485,11 @@ cdef class MVector3D:
         return self.__data - other
 
     def __mul__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mul_float(other)
         elif isinstance(other, MVector3D):
             v = self.mul_MVector3D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mul_int(other)
         else:
             v = self.data() * other
@@ -507,11 +507,11 @@ cdef class MVector3D:
         return self.__data * other
 
     def __truediv__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.truediv_float(other)
         elif isinstance(other, MVector3D):
             v = self.truediv_MVector3D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.truediv_int(other)
         else:
             v = self.data() / other
@@ -529,11 +529,11 @@ cdef class MVector3D:
         return self.__data / other
 
     def __floordiv__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.floordiv_float(other)
         elif isinstance(other, MVector3D):
             v = self.floordiv_MVector3D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.floordiv_int(other)
         else:
             v = self.data() // other
@@ -551,11 +551,11 @@ cdef class MVector3D:
         return self.__data // other
 
     def __mod__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mod_float(other)
         elif isinstance(other, MVector3D):
             v = self.mod_MVector3D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mod_int(other)
         else:
             v = self.data() % other
@@ -723,11 +723,11 @@ cdef class MVector4D:
         return self.data().greater_equal(other.data())
 
     def __add__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.add_float(other)
         elif isinstance(other, MVector4D):
             v = self.add_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.add_int(other)
         else:
             v = self.data() + other
@@ -745,11 +745,11 @@ cdef class MVector4D:
         return self.__data + other
 
     def __sub__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.sub_float(other)
         elif isinstance(other, MVector4D):
             v = self.sub_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.sub_int(other)
         else:
             v = self.data() - other
@@ -767,11 +767,11 @@ cdef class MVector4D:
         return self.__data - other
 
     def __mul__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mul_float(other)
         elif isinstance(other, MVector4D):
             v = self.mul_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mul_int(other)
         else:
             v = self.data() * other
@@ -789,11 +789,11 @@ cdef class MVector4D:
         return self.__data * other
 
     def __truediv__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.truediv_float(other)
         elif isinstance(other, MVector4D):
             v = self.truediv_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.truediv_int(other)
         else:
             v = self.data() / other
@@ -811,11 +811,11 @@ cdef class MVector4D:
         return self.__data / other
 
     def __floordiv__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.floordiv_float(other)
         elif isinstance(other, MVector4D):
             v = self.floordiv_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.floordiv_int(other)
         else:
             v = self.data() // other
@@ -833,11 +833,11 @@ cdef class MVector4D:
         return self.__data // other
 
     def __mod__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mod_float(other)
         elif isinstance(other, MVector4D):
             v = self.mod_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mod_int(other)
         else:
             v = self.data() % other
@@ -1606,11 +1606,11 @@ cdef class MMatrix4x4:
         return np.all(np.greater_equal(self.data(), other.data()))
 
     def __add__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.add_float(other)
         elif isinstance(other, MMatrix4x4):
             v = self.add_MMatrix4x4(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.add_int(other)
         else:
             v = self.data() + other
@@ -1627,11 +1627,11 @@ cdef class MMatrix4x4:
         return self.__data + other
 
     def __sub__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.sub_float(other)
         elif isinstance(other, MMatrix4x4):
             v = self.sub_MMatrix4x4(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.sub_int(other)
         else:
             v = self.data() - other
@@ -1648,7 +1648,7 @@ cdef class MMatrix4x4:
         return self.__data - other
 
     def __mul__(self, other):
-        if isinstance(other, np.float):
+        if isinstance(other, float):
             v = self.mul_float(other)
         elif isinstance(other, MMatrix4x4):
             v = self.mul_MMatrix4x4(other)
@@ -1656,7 +1656,7 @@ cdef class MMatrix4x4:
             return self.mul_MVector3D(other)
         elif isinstance(other, MVector4D):
             return self.mul_MVector4D(other)
-        elif isinstance(other, np.int):
+        elif isinstance(other, int):
             v = self.mul_int(other)
         else:
             v = self.data() * other

@@ -16,45 +16,45 @@ from utils.MLogger import MLogger # noqa
 logger = MLogger(__name__)
 
 
-# リソースファイルのパス
+# 资源文件路径
 def resource_path(relative):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative)
     return os.path.join(relative)
 
 
-# ファイル履歴読み込み
+# 读取文件历史记录
 def read_history(mydir_path):
-    # ファイル履歴
+    # 文件历史记录
     base_file_hitories = {"vmd": [], "org_pmx": [], "rep_pmx": [], "camera_vmd": [], "camera_pmx": [], "smooth_vmd": [], "smooth_pmx": [], "bulk_csv": [], "max": 50}
     file_hitories = cPickle.loads(cPickle.dumps(base_file_hitories, -1))
 
-    # 履歴JSONファイルがあれば読み込み
+    # 若存在历史JSON文件则读取
     try:
         with open(os.path.join(mydir_path, 'history.json'), 'r', encoding="utf-8") as f:
             file_hitories = json.load(f)
-            # キーが揃っているかチェック
+            # 检查键是否齐全
             for key in base_file_hitories.keys():
                 if key not in file_hitories:
                     file_hitories[key] = []
-            # 最大件数は常に上書き
+            # 最大条数始终覆盖
             file_hitories["max"] = 50
     except Exception:
-        # UTF-8で読み込めなかった場合、デフォルトで読み込んでUTF-8変換
+        # 若无法以UTF-8读取，则按默认编码读取后转换为UTF-8
         try:
             with open(os.path.join(mydir_path, 'history.json'), 'r') as f:
                 file_hitories = json.load(f)
-                # キーが揃っているかチェック
+                # 检查键是否齐全
                 for key in base_file_hitories.keys():
                     if key not in file_hitories:
                         file_hitories[key] = []
-                # 最大件数は常に上書き
+                # 最大条数始终覆盖
                 file_hitories["max"] = 50
             
-            # 一旦UTF-8で出力
+            # 先以UTF-8输出
             save_history(mydir_path, file_hitories)
 
-            # UTF-8で読み込みし直し
+            # 重新以UTF-8读取
             return read_history(mydir_path)
         except Exception:
             file_hitories = cPickle.loads(cPickle.dumps(base_file_hitories, -1))
@@ -63,7 +63,7 @@ def read_history(mydir_path):
 
 
 def save_history(mydir_path, file_hitories):
-    # 入力履歴を保存
+    # 保存输入历史记录
     try:
         with open(os.path.join(mydir_path, 'history.json'), 'w', encoding="utf-8") as f:
             json.dump(file_hitories, f, ensure_ascii=False)
@@ -71,7 +71,7 @@ def save_history(mydir_path, file_hitories):
         logger.error("履歴ファイルの保存に失敗しました", e, decoration=MLogger.DECORATION_BOX)
 
 
-# パス解決
+# 路径解析
 def get_mydir_path(exec_path):
     logger.test("sys.argv %s", sys.argv)
     
@@ -81,7 +81,7 @@ def get_mydir_path(exec_path):
     return dir_path
 
 
-# ディレクトリパス
+# 目录路径
 def get_dir_path(base_file_path, is_print=True):
     if os.path.exists(base_file_path):
         file_path_list = [base_file_path]
@@ -92,16 +92,16 @@ def get_dir_path(base_file_path, is_print=True):
         return ""
 
     try:
-        # ファイルパスをオブジェクトとして解決し、親を取得する
+        # 将文件路径解析为对象并获取父级
         return str(Path(file_path_list[0]).resolve().parents[0])
     except Exception as e:
         logger.error("ファイルパスの解析に失敗しました。\nパスに使えない文字がないか確認してください。\nファイルパス: {0}\n\n{1}".format(base_file_path, e.with_traceback(sys.exc_info()[2])))
         raise e
     
 
-# モーフ置換組み合わせファイル
+# 表情替换组合文件
 def get_output_morph_path(base_file_path: str, org_pmx_path: str, rep_pmx_path: str):
-    # モーションVMDパスの拡張子リスト
+    # 动作VMD路径的扩展名列表
     if os.path.exists(base_file_path):
         file_path_list = [base_file_path]
     else:
@@ -110,33 +110,33 @@ def get_output_morph_path(base_file_path: str, org_pmx_path: str, rep_pmx_path: 
     if len(file_path_list) == 0 or (len(file_path_list) > 0 and not os.path.exists(file_path_list[0])) or not os.path.exists(rep_pmx_path):
         return ""
 
-    # モーションVMDディレクトリパス
+    # 动作VMD目录路径
     motion_vmd_dir_path = get_dir_path(file_path_list[0])
-    # モーションVMDファイル名・拡張子
+    # 动作VMD文件名・扩展名
     motion_vmd_file_name, motion_vmd_ext = os.path.splitext(os.path.basename(file_path_list[0]))
-    # 作成元モデルファイル名・拡張子
+    # 源模型文件名・扩展名
     org_pmx_file_name, _ = os.path.splitext(os.path.basename(org_pmx_path))
-    # 変換先モデルファイル名・拡張子
+    # 目标模型文件名・扩展名
     rep_pmx_file_name, _ = os.path.splitext(os.path.basename(rep_pmx_path))
 
-    # 出力ファイルパス生成
+    # 生成输出文件路径
     new_output_morph_path = os.path.join(motion_vmd_dir_path, "{0}_{1}_{2}{3}".format(motion_vmd_file_name, org_pmx_file_name, rep_pmx_file_name, ".csv"))
 
     return new_output_morph_path
 
 
-# VMD出力ファイルパス生成
-# base_file_path: モーションVMDパス(アスタリスク込み)
-# rep_pmx_path: 変換先モデルPMXパス
-# detail_stance_flg: スタンス詳細再現FLG
-# twist_flg: 捩り分散
-# arm_process_flg_avoidance: 接触回避
-# arm_process_flg_alignment: 手首位置合わせ
-# is_morphs: モーフ置換有無
-# output_vmd_path: 出力ファイルパス
+# 生成VMD输出文件路径
+# base_file_path: 动作VMD路径（含通配符）
+# rep_pmx_path: 目标模型PMX路径
+# detail_stance_flg: 站姿细节还原开关
+# twist_flg: 扭转分散
+# arm_process_flg_avoidance: 接触规避
+# arm_process_flg_alignment: 手腕位置对齐
+# is_morphs: 是否进行表情替换
+# output_vmd_path: 输出文件路径
 def get_output_vmd_path(base_file_path: str, rep_pmx_path: str, detail_stance_flg: bool, twist_flg: bool, \
                         arm_process_flg_avoidance: bool, arm_process_flg_alignment: bool, is_morphs: bool, output_vmd_path: str, is_force=False):
-    # モーションVMDパスの拡張子リスト
+    # 动作VMD路径的扩展名列表
     if os.path.exists(base_file_path):
         file_path_list = [base_file_path]
     else:
@@ -145,17 +145,17 @@ def get_output_vmd_path(base_file_path: str, rep_pmx_path: str, detail_stance_fl
     if len(file_path_list) == 0 or (len(file_path_list) > 0 and not os.path.exists(file_path_list[0])) or not os.path.exists(rep_pmx_path):
         return ""
 
-    # モーションVMDディレクトリパス
+    # 动作VMD目录路径
     motion_vmd_dir_path = get_dir_path(file_path_list[0])
-    # モーションVMDファイル名・拡張子
+    # 动作VMD文件名・扩展名
     motion_vmd_file_name, motion_vmd_ext = os.path.splitext(os.path.basename(file_path_list[0]))
-    # 変換先モデルファイル名・拡張子
+    # 目标模型文件名・扩展名
     rep_pmx_file_name, _ = os.path.splitext(os.path.basename(rep_pmx_path))
 
-    # モーフ
+    # 表情
 
-    # スタンス追加補正
-    # 捩り分散
+    # 站姿追加修正
+    # 扭转分散
     # 腕
     suffix = "{0}{1}{2}{3}{4}".format(
         ("S" if detail_stance_flg else ""),
@@ -168,10 +168,10 @@ def get_output_vmd_path(base_file_path: str, rep_pmx_path: str, detail_stance_fl
     if len(suffix) > 0:
         suffix = "_{0}".format(suffix)
 
-    # 出力ファイルパス生成
+    # 生成输出文件路径
     new_output_vmd_path = os.path.join(motion_vmd_dir_path, "{0}_{1}{2}_{3:%Y%m%d_%H%M%S}{4}".format(motion_vmd_file_name, rep_pmx_file_name, suffix, datetime.now(), ".vmd"))
 
-    # ファイルパス自体が変更されたか、自動生成ルールに則っている場合、ファイルパス変更
+    # 若文件路径本身已变更，或符合自动生成规则，则更改文件路径
     if is_force or is_auto_vmd_output_path(output_vmd_path, motion_vmd_dir_path, motion_vmd_file_name, ".vmd", rep_pmx_file_name):
 
         try:
@@ -189,13 +189,13 @@ def get_output_vmd_path(base_file_path: str, rep_pmx_path: str, detail_stance_fl
     return output_vmd_path
 
 
-# 自動生成ルールに則ったパスか
+# 是否为符合自动生成规则的路径
 def is_auto_vmd_output_path(output_vmd_path: str, motion_vmd_dir_path: str, motion_vmd_file_name: str, motion_vmd_ext: str, rep_pmx_file_name: str):
     if not output_vmd_path:
-        # 出力パスがない場合、置き換え対象
+        # 没有输出路径时，作为替换对象
         return True
 
-    # 新しく設定しようとしている出力ファイルパスの正規表現
+    # 新设置的输出文件路径的正则表达式
     escaped_motion_vmd_file_name = escape_filepath(os.path.join(motion_vmd_dir_path, motion_vmd_file_name))
     escaped_rep_pmx_file_name = escape_filepath(rep_pmx_file_name)
     escaped_motion_vmd_ext = escape_filepath(motion_vmd_ext)
@@ -205,31 +205,31 @@ def is_auto_vmd_output_path(output_vmd_path: str, motion_vmd_dir_path: str, moti
     
     logger.debug("new_output_vmd_pattern: %s", new_output_vmd_pattern)
     
-    # 自動生成ルールに則ったファイルパスである場合、合致あり
+    # 若是符合自动生成规则的文件路径，则视为匹配
     return re.match(new_output_vmd_pattern, output_vmd_path) is not None
 
 
-# カメラVMD出力ファイルパス生成
-# base_file_path: モーションカメラVMDパス
-# rep_pmx_path: 変換先モデルPMXパス
-# output_camera_vmd_path: 出力ファイルパス
+# 生成相机VMD输出文件路径
+# base_file_path: 相机动作VMD路径
+# rep_pmx_path: 目标模型PMX路径
+# output_camera_vmd_path: 输出文件路径
 def get_output_camera_vmd_path(base_file_path: str, rep_pmx_path: str, output_camera_vmd_path: str, camera_length: float, is_force=False):
-    # モーションカメラVMDパスの拡張子リスト
+    # 相机动作VMD路径的扩展名列表
     if not os.path.exists(base_file_path) or not os.path.exists(rep_pmx_path):
         return ""
 
-    # モーションカメラVMDディレクトリパス
+    # 相机动作VMD目录路径
     motion_camera_vmd_dir_path = get_dir_path(base_file_path)
-    # モーションカメラVMDファイル名・拡張子
+    # 相机动作VMD文件名・扩展名
     motion_camera_vmd_file_name, motion_camera_vmd_ext = os.path.splitext(os.path.basename(base_file_path))
-    # 変換先モデルファイル名・拡張子
+    # 目标模型文件名・扩展名
     rep_pmx_file_name, _ = os.path.splitext(os.path.basename(rep_pmx_path))
 
-    # 出力ファイルパス生成
+    # 生成输出文件路径
     new_output_camera_vmd_path = os.path.join(motion_camera_vmd_dir_path, "{0}_{1}({2})_{3:%Y%m%d_%H%M%S}{4}".format( \
         motion_camera_vmd_file_name, rep_pmx_file_name, camera_length, datetime.now(), ".vmd"))
 
-    # ファイルパス自体が変更されたか、自動生成ルールに則っている場合、ファイルパス変更
+    # 若文件路径本身已变更，或符合自动生成规则，则更改文件路径
     if is_force or is_auto_camera_vmd_output_path(output_camera_vmd_path, motion_camera_vmd_dir_path, motion_camera_vmd_file_name, ".vmd", rep_pmx_file_name):
 
         try:
@@ -247,13 +247,13 @@ def get_output_camera_vmd_path(base_file_path: str, rep_pmx_path: str, output_ca
     return output_camera_vmd_path
 
 
-# 自動生成ルールに則ったパスか
+# 是否为符合自动生成规则的路径
 def is_auto_camera_vmd_output_path(output_camera_vmd_path: str, motion_camera_vmd_dir_path: str, motion_camera_vmd_file_name: str, motion_camera_vmd_ext: str, rep_pmx_file_name: str):
     if not output_camera_vmd_path:
-        # 出力パスがない場合、置き換え対象
+        # 没有输出路径时，作为替换对象
         return True
 
-    # 新しく設定しようとしている出力ファイルパスの正規表現
+    # 新设置的输出文件路径的正则表达式
     escaped_motion_camera_vmd_file_name = escape_filepath(os.path.join(motion_camera_vmd_dir_path, motion_camera_vmd_file_name))
     escaped_rep_pmx_file_name = escape_filepath(rep_pmx_file_name)
     escaped_motion_camera_vmd_ext = escape_filepath(motion_camera_vmd_ext)
@@ -261,7 +261,7 @@ def is_auto_camera_vmd_output_path(output_camera_vmd_path: str, motion_camera_vm
     new_output_camera_vmd_pattern = re.compile(r'^%s_%s(\d+)_%s%s$' % (escaped_motion_camera_vmd_file_name, \
                                                escaped_rep_pmx_file_name, r"_\d{8}_\d{6}", escaped_motion_camera_vmd_ext))
     
-    # 自動生成ルールに則ったファイルパスである場合、合致あり
+    # 若是符合自动生成规则的文件路径，则视为匹配
     return re.match(new_output_camera_vmd_pattern, output_camera_vmd_path) is not None
 
 

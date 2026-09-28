@@ -24,28 +24,28 @@ class VmdWriter():
 
         if len(bone_frames) > 0 or len(morph_frames) > 0:
             try:
-                # モデル名を20byteで切る
+                # 将模型名截断为20字节
                 model_bname = self.data_set.rep_model.name.encode('cp932').decode('shift_jis').encode('shift_jis')[:20]
             except Exception:
-                logger.warning("モデル名に日本語・英語で判読できない文字が含まれているため、仮モデル名を設定します。 %s", self.data_set.rep_model.name, decoration=MLogger.DECORATION_BOX)
+                logger.warning("模型名中包含无法用日文・英文判读的字符，因此设定临时模型名。 %s", self.data_set.rep_model.name, decoration=MLogger.DECORATION_BOX)
                 model_bname = "Vmd Sized Model".encode('shift_jis')[:20]
 
-            # 20文字に満たなかった場合、埋める
+            # 不足20字符时补齐
             model_bname = model_bname.ljust(20, b'\x00')
                 
             fout.write(model_bname)
         else:
-            # カメラ・照明
+            # 相机・照明
             fout.write(b'\x83J\x83\x81\x83\x89\x81E\x8f\xc6\x96\xbe\x00on Data')
         
         # bone frames
-        fout.write(struct.pack('<L', len(bone_frames)))  # ボーンフレーム数
+        fout.write(struct.pack('<L', len(bone_frames)))  # 骨骼关键帧数
         for bf in bone_frames:
             bf.write(fout)
         fout.write(struct.pack('<L', len(morph_frames)))  # 表情キーフレーム数
         for mf in morph_frames:
             mf.write(fout)
-        fout.write(struct.pack('<L', len(camera_frames)))  # カメラキーフレーム数
+        fout.write(struct.pack('<L', len(camera_frames)))  # 相机关键帧数
         for cf in camera_frames:
             cf.write(fout)
         fout.write(struct.pack('<L', len(self.data_set.motion.lights)))  # 照明キーフレーム数
@@ -56,7 +56,7 @@ class VmdWriter():
             cf.write(fout)
             
         if len(camera_frames) == 0:
-            fout.write(struct.pack('<L', len(self.data_set.motion.showiks)))  # モデル表示・IK on/offキーフレーム数
+            fout.write(struct.pack('<L', len(self.data_set.motion.showiks)))  # 模型显示・IK on/off关键帧数
             for sf in self.data_set.motion.showiks:
                 sf.write(fout)
         

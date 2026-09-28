@@ -10,31 +10,31 @@ from module.MOptions import MSmoothOptions
 from service.ConvertSmoothService import ConvertSmoothService
 from utils.MException import SizingException
 
-# 指数表記なし、有効小数点桁数6、30を超えると省略あり、一行の文字数200
+# 不使用指数计数法，有效小数位数6，超过30则省略，每行字符数200
 np.set_printoptions(suppress=True, precision=6, threshold=30, linewidth=200)
 
-# Windowsマルチプロセス対策
+# Windows 多进程对策
 multiprocessing.freeze_support()
 
 
 if __name__ == "__main__":
     if os.name == "nt":
-        import winsound     # Windows版のみインポート
+        import winsound     # 仅 Windows 下导入
 
-    # 引数指定がある場合、コマンドライン実行
+    # 有参数指定时，以命令行方式执行
     try:
         options = MSmoothOptions.parse("VmdSizing Smooth")
 
         ConvertSmoothService(options).execute()
     except SizingException as se:
-        print("スムージング処理が処理できないデータで終了しました。\n\n%s", se.message)
+        print("平滑处理因数据无法处理而结束。\n\n%s", se.message)
     except Exception:
-        print("スムージング処理が意図せぬエラーで終了しました。")
+        print("平滑处理因意外错误而结束。")
         print(traceback.format_exc())
     finally:
         logging.shutdown()
 
-    # 終了音を鳴らす
+    # 播放结束提示音
     if os.name == "nt":
         # Windows
         try:

@@ -26,13 +26,13 @@ class ConvertVmdService():
         logging.basicConfig(level=self.options.logging_level, format="%(message)s [%(module_name)s]")
 
         try:
-            service_data_txt = "VMD変換処理実行\n------------------------\nexeバージョン: {version_name}\n".format(version_name=self.options.version_name) \
+            service_data_txt = "VMD转换处理执行\n------------------------\nexe版本: {version_name}\n".format(version_name=self.options.version_name) \
 
-            service_data_txt = "{service_data_txt}　　ボーンCSV: {bone_csv}\n".format(service_data_txt=service_data_txt,
+            service_data_txt = "{service_data_txt}　　骨骼CSV: {bone_csv}\n".format(service_data_txt=service_data_txt,
                                     bone_csv=os.path.basename(self.options.bone_csv_path)) # noqa
-            service_data_txt = "{service_data_txt}　　モーフCSV: {morph_csv}\n".format(service_data_txt=service_data_txt,
+            service_data_txt = "{service_data_txt}　　表情CSV: {morph_csv}\n".format(service_data_txt=service_data_txt,
                                     morph_csv=os.path.basename(self.options.morph_csv_path)) # noqa
-            service_data_txt = "{service_data_txt}　　カメラCSV: {camera_csv}\n".format(service_data_txt=service_data_txt,
+            service_data_txt = "{service_data_txt}　　相机CSV: {camera_csv}\n".format(service_data_txt=service_data_txt,
                                     camera_csv=os.path.basename(self.options.camera_csv_path)) # noqa
 
             logger.info(service_data_txt, decoration=MLogger.DECORATION_BOX)
@@ -42,9 +42,9 @@ class ConvertVmdService():
 
             return result
         except SizingException as se:
-            logger.error("VMD変換処理が処理できないデータで終了しました。\n\n%s", se.message, decoration=MLogger.DECORATION_BOX)
+            logger.error("VMD转换处理因无法处理的数据而结束。\n\n%s", se.message, decoration=MLogger.DECORATION_BOX)
         except Exception:
-            logger.critical("VMD変換処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc(), decoration=MLogger.DECORATION_BOX)
+            logger.critical("VMD转换处理因意外错误而结束。\n\n%s", traceback.format_exc(), decoration=MLogger.DECORATION_BOX)
         finally:
             logging.shutdown()
 
@@ -66,7 +66,7 @@ class ConvertVmdService():
             # ボーンCSV読み込み
             with open(self.options.bone_csv_path, encoding='cp932', mode='r') as f:
                 reader = csv.reader(f)
-                next(reader)  # ヘッダーを読み飛ばす
+                next(reader)  # 跳过表头
 
                 cnt = 0
                 for ridx, row in enumerate(reader):
@@ -75,64 +75,64 @@ class ConvertVmdService():
 
                     try:
                         if len(row) < 0 or not row[0]:
-                            logger.error("[ボーン] %s行目のボーン名（1列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[骨骼] 第%s行的骨骼名（第1列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
-                        # ボーン名
+                        # 骨骼名
                         bf.set_name(row[0])
                     except Exception as e:
-                        logger.error("[ボーン] %s行目のボーン名の読み取りに失敗しました\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[骨骼] 第%s行的骨骼名读取失败\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 1 or not row[1]:
-                            logger.error("[ボーン] %s行目のフレーム番号（2列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[骨骼] 第%s行的帧号（第2列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # フレーム
                         bf.fno = int(float(row[1]))
 
                         if bf.fno < 0:
-                            logger.error("[ボーン] %s行目のフレーム番号（2列目）に負数が設定されています", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[骨骼] 第%s行的帧号（第2列）被设置为负数", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                     except Exception as e:
-                        logger.error("[ボーン] %s行目のフレーム番号の読み取りに失敗しました\nフレーム番号は半角数字のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[骨骼] 第%s行的帧号读取失败\n帧号只能输入半角数字。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 4 or not row[2] or not row[3] or not row[4]:
-                            logger.error("[ボーン] %s行目の位置（3-5列目）のいずれかが設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[骨骼] 第%s行的位置（第3-5列）のいずれか未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # 位置
                         bf.position = MVector3D(float(row[2]), float(row[3]), float(row[4]))
                     except Exception as e:
-                        logger.error("[ボーン] %s行目の位置の読み取りに失敗しました\n位置は半角数字・符号・小数点のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[骨骼] 第%s行的位置读取失败\n位置只能输入半角数字・符号・小数点。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 7 or not row[5] or not row[6] or not row[7]:
-                            logger.error("[ボーン] %s行目の回転（6-8列目）のいずれかが設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[骨骼] 第%s行的旋转（第6-8列）のいずれか未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # 回転
                         bf.rotation = MQuaternion.fromEulerAngles(float(row[5]), float(row[6]) * -1, float(row[7]) * -1)
                     except Exception as e:
-                        logger.error("[ボーン] %s行目の回転の読み取りに失敗しました\n位置は半角数字・符号・小数点のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[骨骼] 第%s行的回転读取失败\n位置只能输入半角数字・符号・小数点。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 71:
-                            logger.error("[ボーン] %s行目の補間曲線（9-72列目）のいずれかが設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[骨骼] 第%s行的插值曲线（第9-72列）のいずれか未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
                         
                         for cidx in range(8, 72):
                             if not row[cidx]:
-                                logger.error("[ボーン] %s行目の補間曲線の%s番目が設定されていません", rno, cidx - 7, decoration=MLogger.DECORATION_BOX)
+                                logger.error("[骨骼] 第%s行的插值曲线の%s番目未设置", rno, cidx - 7, decoration=MLogger.DECORATION_BOX)
                                 return False
 
-                        # 補間曲線(一旦floatで読み込んで指数等も読み込んだ後、intに変換)
+                        # 插值曲线(一旦floatで読み込んで指数等も読み込んだ後、intに変換)
                         bf.interpolation = [int(float(row[8])), int(float(row[9])), int(float(row[10])), int(float(row[11])), int(float(row[12])), int(float(row[13])), \
                                             int(float(row[14])), int(float(row[15])), int(float(row[16])), int(float(row[17])), int(float(row[18])), int(float(row[19])), \
                                             int(float(row[20])), int(float(row[21])), int(float(row[22])), int(float(row[23])), int(float(row[24])), int(float(row[25])), \
@@ -147,11 +147,11 @@ class ConvertVmdService():
                         
                         for bidx, bi in enumerate(bf.interpolation):
                             if 0 > bi:
-                                logger.error("[ボーン] %s行目の補間曲線（%s列目）に負数が設定されています", rno, bidx + 9, decoration=MLogger.DECORATION_BOX)
+                                logger.error("[骨骼] 第%s行的插值曲线（第%s列）被设置为负数", rno, bidx + 9, decoration=MLogger.DECORATION_BOX)
                                 return False
 
                     except Exception as e:
-                        logger.error("[ボーン] %s行目の補間曲線の読み取りに失敗しました\n位置は半角数字のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[骨骼] 第%s行的插值曲线读取失败\n只能输入半角数字。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
                     
                     bf.read = True
@@ -165,7 +165,7 @@ class ConvertVmdService():
                     cnt += 1
 
                     if cnt % 10000 == 0:
-                        logger.info("[ボーン] %sキー目:終了", cnt)
+                        logger.info("[骨骼] 第%s个关键帧:完成", cnt)
 
         if self.options.morph_csv_path and os.path.exists(self.options.morph_csv_path):
             # モーフモーションCSVディレクトリパス
@@ -179,7 +179,7 @@ class ConvertVmdService():
             # モーフCSV読み込み
             with open(self.options.morph_csv_path, encoding='cp932', mode='r') as f:
                 reader = csv.reader(f)
-                next(reader)  # ヘッダーを読み飛ばす
+                next(reader)  # 跳过表头
 
                 cnt = 0
                 for ridx, row in enumerate(reader):
@@ -188,39 +188,39 @@ class ConvertVmdService():
 
                     try:
                         if len(row) < 0 or not row[0]:
-                            logger.error("[モーフ] %s行目のモーフ名（1列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[表情] 第%s行的表情名（第1列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
-                        # ボーン名
+                        # 骨骼名
                         mf.set_name(row[0])
                     except Exception as e:
-                        logger.error("[モーフ] %s行目のモーフ名の読み取りに失敗しました\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[表情] 第%s行的表情名读取失败\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 1 or not row[1]:
-                            logger.error("[モーフ] %s行目のフレーム番号（2列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[表情] 第%s行的帧号（第2列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # フレーム
                         mf.fno = int(float(row[1]))
 
                         if mf.fno < 0:
-                            logger.error("[モーフ] %s行目のフレーム番号（2列目）に負数が設定されています", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[表情] 第%s行的帧号（第2列）被设置为负数", rno, decoration=MLogger.DECORATION_BOX)
                             return False
                     except Exception as e:
-                        logger.error("[モーフ] %s行目のフレーム番号の読み取りに失敗しました\nフレーム番号は半角数字のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[表情] 第%s行的帧号读取失败\n帧号只能输入半角数字。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 2 or not row[2]:
-                            logger.error("[モーフ] %s行目の大きさ（3列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[表情] 第%s行的大小（第3列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # 値
                         mf.ratio = float(row[2])
                     except Exception as e:
-                        logger.error("[モーフ] %s行目の大きさの読み取りに失敗しました\n大きさは半角数字・符号・小数点のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[表情] 第%s行的大小读取失败\n大小只能输入半角数字・符号・小数点。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     if mf.name not in bone_motion.morphs:
@@ -231,7 +231,7 @@ class ConvertVmdService():
                     cnt += 1
 
                     if cnt % 1000 == 0:
-                        logger.info("[モーフ] %sキー目:終了", cnt)
+                        logger.info("[表情] 第%s个关键帧:完成", cnt)
 
         if len(bone_motion.bones.keys()) > 0 or len(bone_motion.morphs.keys()) > 0:
             # ボーンかモーフのキーがある場合、まとめて出力
@@ -242,7 +242,7 @@ class ConvertVmdService():
 
             VmdWriter(data_set).write()
 
-            logger.info("ボーン・モーフモーションVMD: %s", bone_fpath, decoration=MLogger.DECORATION_BOX)
+            logger.info("骨骼・表情动作VMD: %s", bone_fpath, decoration=MLogger.DECORATION_BOX)
 
         if self.options.camera_csv_path and os.path.exists(self.options.camera_csv_path):
             # カメラモーションCSVディレクトリパス
@@ -256,7 +256,7 @@ class ConvertVmdService():
             # カメラCSV読み込み
             with open(self.options.camera_csv_path, encoding='cp932', mode='r') as f:
                 reader = csv.reader(f)
-                next(reader)  # ヘッダーを読み飛ばす
+                next(reader)  # 跳过表头
 
                 cnt = 0
                 for ridx, row in enumerate(reader):
@@ -265,94 +265,94 @@ class ConvertVmdService():
 
                     try:
                         if len(row) < 1 or not row[0]:
-                            logger.error("[カメラ] %s行目のフレーム番号（1列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的帧号（第1列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # フレーム
                         cf.fno = int(row[0])
 
                         if cf.fno < 0:
-                            logger.error("[カメラ] %s行目のフレーム番号（1列目）に負数が設定されています", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的帧号（第1列）被设置为负数", rno, decoration=MLogger.DECORATION_BOX)
                             return False
                     except Exception as e:
-                        logger.error("[カメラ] %s行目のフレーム番号の読み取りに失敗しました\nフレーム番号は半角数字のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的帧号读取失败\n帧号只能输入半角数字。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 3 or not row[1] or not row[2] or not row[3]:
-                            logger.error("[カメラ] %s行目の位置（2-4列目）のいずれかが設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的位置（第2-4列）のいずれか未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # 位置
                         cf.position = MVector3D(float(row[1]), float(row[2]), float(row[3]))
                     except Exception as e:
-                        logger.error("[カメラ] %s行目の位置の読み取りに失敗しました\n位置は半角数字・符号・小数点のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的位置读取失败\n位置只能输入半角数字・符号・小数点。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 6 or not row[4] or not row[5] or not row[6]:
-                            logger.error("[カメラ] %s行目の回転（5-7列目）のいずれかが設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的旋转（第5-7列）のいずれか未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
-                        # 回転（オイラー角）
+                        # 旋转（オイラー角）
                         cf.euler = MVector3D(float(row[4]), float(row[5]), float(row[6]))
                     except Exception as e:
-                        logger.error("[カメラ] %s行目の回転の読み取りに失敗しました\n回転は半角数字・符号・小数点のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的回転读取失败\n旋转只能输入半角数字・符号・小数点。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 7 or not row[7]:
-                            logger.error("[カメラ] %s行目の距離（8列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的距离（第8列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                         # 距離
                         cf.length = -(float(row[7]))
                     except Exception as e:
-                        logger.error("[カメラ] %s行目の距離の読み取りに失敗しました\n距離は半角数字・符号・小数点のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的距離读取失败\n距离只能输入半角数字・符号・小数点。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 8 or not row[8]:
-                            logger.error("[カメラ] %s行目の視野角（9列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的视角（第9列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
-                        # 視野角
+                        # 视角
                         cf.angle = int(row[8])
 
                         if cf.angle < 0:
-                            logger.error("[カメラ] %s行目の視野角（9列目）に負数が設定されています", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的视角（第9列）被设置为负数", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
                     except Exception as e:
-                        logger.error("[カメラ] %s行目の視野角の読み取りに失敗しました\n視野角は半角数字のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的视角读取失败\n视角只能输入半角数字。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 8 or not row[9]:
-                            logger.error("[カメラ] %s行目のパース（10列目）が設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的透视（第10列）未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
 
-                        # パース
+                        # 透视
                         cf.perspective = int(row[9])
 
                         if cf.perspective not in [0, 1]:
-                            logger.error("[カメラ] %s行目のパース（10列目）に0, 1以外の値が設定されています", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的透视（第10列）被设置为0、1以外的值", rno, decoration=MLogger.DECORATION_BOX)
                             return False
                     except Exception as e:
-                        logger.error("[カメラ] %s行目のパースの読み取りに失敗しました\nパースは0, 1のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的透视读取失败\n透视只能输入0或1。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
 
                     try:
                         if len(row) < 33:
-                            logger.error("[カメラ] %s行目の補間曲線（11-34列目）のいずれかが設定されていません", rno, decoration=MLogger.DECORATION_BOX)
+                            logger.error("[相机] 第%s行的插值曲线（第11-34列）のいずれか未设置", rno, decoration=MLogger.DECORATION_BOX)
                             return False
                         
                         for cidx in range(10, 34):
                             if not row[cidx]:
-                                logger.error("[カメラ] %s行目の補間曲線の%s番目が設定されていません", rno, cidx - 9, decoration=MLogger.DECORATION_BOX)
+                                logger.error("[相机] 第%s行的插值曲线の%s番目未设置", rno, cidx - 9, decoration=MLogger.DECORATION_BOX)
                                 return False
 
-                        # 補間曲線(一旦floatで読み込んで指数等も読み込んだ後、intに変換)
+                        # 插值曲线(一旦floatで読み込んで指数等も読み込んだ後、intに変換)
                         cf.interpolation = [int(float(row[10])), int(float(row[11])), int(float(row[12])), int(float(row[13])), int(float(row[14])), int(float(row[15])), \
                                             int(float(row[16])), int(float(row[17])), int(float(row[18])), int(float(row[19])), int(float(row[20])), int(float(row[21])), \
                                             int(float(row[22])), int(float(row[23])), int(float(row[24])), int(float(row[25])), int(float(row[26])), int(float(row[27])), \
@@ -360,11 +360,11 @@ class ConvertVmdService():
 
                         for cidx, ci in enumerate(cf.interpolation):
                             if 0 > ci:
-                                logger.error("[カメラ] %s行目の補間曲線（%s列目）に負数が設定されています", rno, cidx + 11, decoration=MLogger.DECORATION_BOX)
+                                logger.error("[相机] 第%s行的插值曲线（第%s列）被设置为负数", rno, cidx + 11, decoration=MLogger.DECORATION_BOX)
                                 return False
 
                     except Exception as e:
-                        logger.error("[カメラ] %s行目の補間曲線の読み取りに失敗しました\n位置は半角数字のみ入力可能です。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
+                        logger.error("[相机] 第%s行的插值曲线读取失败\n只能输入半角数字。\n%s", rno, e, decoration=MLogger.DECORATION_BOX)
                         return False
                    
                     camera_motion.cameras[cf.fno] = cf
@@ -372,7 +372,7 @@ class ConvertVmdService():
                     cnt += 1
 
                     if cnt % 500 == 0:
-                        logger.info("[カメラ] %sキー目:終了", cnt)
+                        logger.info("[相机] 第%s个关键帧:完成", cnt)
 
             if len(camera_motion.cameras) > 0:
                 # ボーンかモーフのキーがある場合、まとめて出力
@@ -383,7 +383,7 @@ class ConvertVmdService():
 
                 VmdWriter(data_set).write()
 
-                logger.info("カメラモーションVMD: %s", camera_fpath, decoration=MLogger.DECORATION_BOX)
+                logger.info("相机动作VMD: %s", camera_fpath, decoration=MLogger.DECORATION_BOX)
 
         return True
 

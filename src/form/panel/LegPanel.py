@@ -17,33 +17,33 @@ class LegPanel(BasePanel):
     def __init__(self, frame: wx.Frame, parent: wx.Notebook, tab_idx: int):
         super().__init__(frame, parent, tab_idx)
 
-        # 全体移動量補正 --------------------
+        # 整体移动量修正 --------------------
 
-        move_correction_tooltip = "センター・足ＩＫなどの移動系ボーンの全体の移動量を補正できます。\n複数人モーションのフォーメーションを全体的に広げたい、少し動きをダイナミックにしたいなどの時に使ってください"
+        move_correction_tooltip = "可对センター・足ＩＫ等位移类骨骼的整体移动量进行修正。\n适用于希望整体拉宽多人动作的队形，或想让动作更具张力等情况"
         self.move_correction_title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # 全体移動量補正タイトル
-        self.move_correction_title_txt = wx.StaticText(self, wx.ID_ANY, u"全体移動量補正", wx.DefaultPosition, wx.DefaultSize, 0)
+        # 整体移动量修正标题
+        self.move_correction_title_txt = wx.StaticText(self, wx.ID_ANY, u"整体移动量修正", wx.DefaultPosition, wx.DefaultSize, 0)
         self.move_correction_title_txt.SetToolTip(move_correction_tooltip)
         self.move_correction_title_txt.Wrap(-1)
         self.move_correction_title_txt.SetFont(wx.Font(wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString))
         self.move_correction_title_sizer.Add(self.move_correction_title_txt, 0, wx.ALL, 5)
         self.sizer.Add(self.move_correction_title_sizer, 0, wx.ALL, 5)
 
-        # 全体移動量補正説明文
+        # 整体移动量修正说明文字
         self.move_correction_description_txt = wx.StaticText(self, wx.ID_ANY, move_correction_tooltip, wx.DefaultPosition, wx.DefaultSize, 0)
         self.sizer.Add(self.move_correction_description_txt, 0, wx.ALL, 5)
 
-        # 全体移動量補正スライダー
+        # 整体移动量修正滑块
         self.move_correction_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.move_correction_txt = wx.StaticText(self, wx.ID_ANY, u"全体移動量補正値", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.move_correction_txt.SetToolTip(u"身長比率にかける補正値です。デフォルトでは1人の場合は1、複数人の場合は頭身比率を設定しています。")
+        self.move_correction_txt = wx.StaticText(self, wx.ID_ANY, u"整体移动量修正值", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.move_correction_txt.SetToolTip(u"这是对身高比例施加的修正值。默认为单人时设为1，多人时设为头身比例。")
         self.move_correction_txt.Wrap(-1)
         self.move_correction_sizer.Add(self.move_correction_txt, 0, wx.ALL, 5)
 
         self.move_correction_label = wx.StaticText(self, wx.ID_ANY, u"（1）", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.move_correction_label.SetToolTip(u"現在指定されている全体移動量補正値です。")
+        self.move_correction_label.SetToolTip(u"当前指定的整体移动量修正值。")
         self.move_correction_label.Wrap(-1)
         self.move_correction_sizer.Add(self.move_correction_label, 0, wx.ALL, 5)
 
@@ -56,42 +56,42 @@ class LegPanel(BasePanel):
         self.static_line01 = wx.StaticLine(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL)
         self.sizer.Add(self.static_line01, 0, wx.EXPAND | wx.ALL, 5)
 
-        # オフセット値
+        # 偏移值
         self.leg_offset_set_dict = {}
-        # オフセット用ダイアログ
+        # 偏移用对话框
         self.leg_offset_dialog = LegOffsetDialog(self.frame)
 
-        # 足ＩＫオフセット --------------------
+        # 足ＩＫ偏移 --------------------
 
-        # Bulk用足ＩＫオフセットデータ
+        # 批量用足ＩＫ偏移数据
         self.bulk_leg_offset_set_dict = {}
 
-        leg_offset_tooltip = "足ＩＫの移動量オフセットを設定できます。\n足を閉じた時に重なってしまったり、全体の移動量は変えずに個別の足ＩＫの移動量だけ調整したい\nといった時に使ってください"
+        leg_offset_tooltip = "可设置足ＩＫ的移动量偏移。\n适用于双腿并拢时发生重叠，或不想改变整体移动量、只想单独调整个别足ＩＫ移动量等情况"
 
-        # 足ＩＫオフセット ----------------
+        # 足ＩＫ偏移 ----------------
         self.leg_offset_title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # 足ＩＫオフセットタイトル
-        self.leg_offset_title_txt = wx.StaticText(self, wx.ID_ANY, u"足ＩＫオフセット", wx.DefaultPosition, wx.DefaultSize, 0)
+        # 足ＩＫ偏移标题
+        self.leg_offset_title_txt = wx.StaticText(self, wx.ID_ANY, u"足ＩＫ偏移", wx.DefaultPosition, wx.DefaultSize, 0)
         self.leg_offset_title_txt.SetToolTip(leg_offset_tooltip)
         self.leg_offset_title_txt.Wrap(-1)
         self.leg_offset_title_txt.SetFont(wx.Font(wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString))
         self.leg_offset_title_sizer.Add(self.leg_offset_title_txt, 0, wx.ALL, 5)
         self.sizer.Add(self.leg_offset_title_sizer, 0, wx.ALL, 5)
 
-        # 足ＩＫオフセット説明文
+        # 足ＩＫ偏移说明文字
         self.leg_offset_description_txt = wx.StaticText(self, wx.ID_ANY, leg_offset_tooltip, wx.DefaultPosition, wx.DefaultSize, 0)
         self.sizer.Add(self.leg_offset_description_txt, 0, wx.ALL, 5)
 
         self.leg_offset_target_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # オフセット値指定
+        # 偏移值指定
         self.leg_offset_target_txt_ctrl = wx.TextCtrl(self, wx.ID_ANY, "", wx.DefaultPosition, (450, 80), wx.HSCROLL | wx.VSCROLL | wx.TE_MULTILINE | wx.TE_READONLY)
         self.leg_offset_target_txt_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
         self.leg_offset_target_sizer.Add(self.leg_offset_target_txt_ctrl, 1, wx.EXPAND | wx.ALL, 5)
 
-        self.leg_offset_target_btn_ctrl = wx.Button(self, wx.ID_ANY, u"オフセット指定", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.leg_offset_target_btn_ctrl.SetToolTip(u"変換先モデルの足ＩＫオフセット値を指定できます")
+        self.leg_offset_target_btn_ctrl = wx.Button(self, wx.ID_ANY, u"偏移指定", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.leg_offset_target_btn_ctrl.SetToolTip(u"可指定目标模型的足ＩＫ偏移值")
         self.leg_offset_target_btn_ctrl.Bind(wx.EVT_BUTTON, self.on_click_leg_offset_target)
         self.leg_offset_target_sizer.Add(self.leg_offset_target_btn_ctrl, 0, wx.ALIGN_BOTTOM | wx.ALL, 5)
 
@@ -104,24 +104,24 @@ class LegPanel(BasePanel):
         
     def get_leg_offsets(self):
         if len(self.bulk_leg_offset_set_dict.keys()) > 0:
-            # Bulk用データがある場合、優先返還
+            # 存在批量数据时，优先返回
             return self.bulk_leg_offset_set_dict
 
         target = {}
         
-        # 選択されたオフセット値を入力欄に設定(ハッシュが同じ場合のみ)
+        # 将指定的偏移值设置到输入框（仅哈希相同时）
         if 1 in self.leg_offset_set_dict and self.leg_offset_set_dict[1].leg_offset_slider:
             if self.leg_offset_set_dict[1].equal_hashdigest(self.frame.file_panel_ctrl.file_set):
                 target[0] = self.leg_offset_set_dict[1].leg_offset_slider.GetValue()
             else:
-                logger.warning("【No.%s】足ＩＫオフセット設定後、ファイルセットが変更されたため、足ＩＫオフセットをクリアします", 1, decoration=MLogger.DECORATION_BOX)
+                logger.warning("【No.%s】足ＩＫ偏移设置后文件集发生变更，因此清除足ＩＫ偏移", 1, decoration=MLogger.DECORATION_BOX)
 
         for set_no in list(self.leg_offset_set_dict.keys())[1:]:
             if set_no in self.leg_offset_set_dict and self.leg_offset_set_dict[set_no].leg_offset_slider:
                 if len(self.frame.multi_panel_ctrl.file_set_list) >= set_no - 1 and self.leg_offset_set_dict[set_no].equal_hashdigest(self.frame.multi_panel_ctrl.file_set_list[set_no - 2]):
                     target[set_no - 1] = self.leg_offset_set_dict[set_no].leg_offset_slider.GetValue()
                 else:
-                    logger.warning("【No.%s】足ＩＫオフセット設定後、ファイルセットが変更されたため、足ＩＫオフセットをクリアします", set_no, decoration=MLogger.DECORATION_BOX)
+                    logger.warning("【No.%s】足ＩＫ偏移设置后文件集发生变更，因此清除足ＩＫ偏移", set_no, decoration=MLogger.DECORATION_BOX)
 
         return target
     
@@ -134,13 +134,13 @@ class LegPanel(BasePanel):
         self.leg_offset_dialog.Hide()
     
     def show_leg_offset(self):
-        # 一旦クリア
+        # 先清空
         self.leg_offset_target_txt_ctrl.SetValue("")
 
-        # 選択されたオフセット値を入力欄に設定
+        # 将指定的偏移值设置到输入框
         texts = []
         for set_no, set_data in self.leg_offset_set_dict.items():
-            # 選択肢ごとの表示文言
+            # 每个选项的显示文字
             texts.append("【No.{0}】　{1}".format(set_no, set_data.leg_offset_slider.GetValue()))
 
         self.leg_offset_target_txt_ctrl.WriteText(" / ".join(texts))
@@ -148,57 +148,57 @@ class LegPanel(BasePanel):
     def initialize(self, event: wx.Event):
 
         if 1 in self.leg_offset_set_dict:
-            # ファイルタブ用足ＩＫオフセットのファイルセットがある場合
+            # 存在文件标签页用足ＩＫ偏移的文件集时
             if self.frame.file_panel_ctrl.file_set.is_loaded():
-                # 既にある場合、ハッシュチェック
+                # 已存在时，进行哈希校验
                 if self.leg_offset_set_dict[1].equal_hashdigest(self.frame.file_panel_ctrl.file_set):
-                    # 同じである場合、スルー
+                    # 相同时则跳过
                     pass
                 else:
-                    # 違う場合、ファイルセット読み直し
+                    # 不同时则重新读取文件集
                     self.add_set(1, self.frame.file_panel_ctrl.file_set, replace=True)
             else:
-                # ファイルタブが読み込み失敗している場合、読み直し（クリア）
+                # 文件标签页读取失败时，重新读取（清空）
                 self.add_set(1, self.frame.file_panel_ctrl.file_set, replace=True)
         else:
-            # 空から作る場合、ファイルタブのファイルセット参照
+            # 从空白创建时，引用文件标签页的文件集
             self.add_set(1, self.frame.file_panel_ctrl.file_set, replace=False)
         
-        # multiはあるだけ調べる
+        # multi 有多少就检查多少
         for multi_file_set_idx, multi_file_set in enumerate(self.frame.multi_panel_ctrl.file_set_list):
             set_no = multi_file_set_idx + 2
             if set_no in self.leg_offset_set_dict:
-                # 複数タブ用足ＩＫオフセットのファイルセットがある場合
+                # 存在多标签页用足ＩＫ偏移的文件集时
                 if multi_file_set.is_loaded():
-                    # 既にある場合、ハッシュチェック
+                    # 已存在时，进行哈希校验
                     if self.leg_offset_set_dict[set_no].equal_hashdigest(multi_file_set):
-                        # 同じである場合、スルー
+                        # 相同时则跳过
                         pass
                     else:
-                        # 違う場合、ファイルセット読み直し
+                        # 不同时则重新读取文件集
                         self.add_set(set_no, multi_file_set, replace=True)
                 else:
-                    # 複数タブが読み込み失敗している場合、読み直し（クリア）
+                    # 多标签页读取失败时，重新读取（清空）
                     self.add_set(set_no, multi_file_set, replace=True)
             else:
-                # 空から作る場合、複数タブのファイルセット参照
+                # 从空白创建时，引用多标签页的文件集
                 self.add_set(set_no, multi_file_set, replace=False)
 
         self.show_leg_offset()
 
         event.Skip()
 
-    # VMD出力ファイルパス生成
+    # 生成VMD输出文件路径
     def set_output_vmd_path(self, event, is_force=False):
-        # 念のため出力ファイルパス自動生成（空の場合設定）
+        # 保险起见自动生成输出文件路径（为空时设置）
         self.frame.file_panel_ctrl.file_set.set_output_vmd_path(event)
 
-        # multiのも出力ファイルパス自動生成（空の場合設定）
+        # multi 也自动生成输出文件路径（为空时设置）
         for file_set in self.frame.multi_panel_ctrl.file_set_list:
             file_set.set_output_vmd_path(event)
     
     def on_check_move_correction(self, event: wx.Event):
-        # パス再生成
+        # 重新生成路径
         self.set_output_vmd_path(event)
 
         event.Skip()
@@ -206,18 +206,18 @@ class LegPanel(BasePanel):
     def add_set(self, set_idx: int, file_set: SizingFileSet, replace: bool):
         new_leg_offset_set = LegOffsetSet(self.frame, self, self.leg_offset_dialog.scrolled_window, set_idx, file_set)
         if replace:
-            # 置き換え
+            # 替换
             self.leg_offset_dialog.set_list_sizer.Hide(self.leg_offset_set_dict[set_idx].set_sizer, recursive=True)
             self.leg_offset_dialog.set_list_sizer.Replace(self.leg_offset_set_dict[set_idx].set_sizer, new_leg_offset_set.set_sizer, recursive=True)
 
-            # 置き換えの場合、オフセット値クリア
+            # 替换时清空偏移值
             self.leg_offset_target_txt_ctrl.SetValue("")
         else:
-            # 新規追加
+            # 新增
             self.leg_offset_dialog.set_list_sizer.Add(new_leg_offset_set.set_sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.leg_offset_set_dict[set_idx] = new_leg_offset_set
 
-        # スクロールバーの表示のためにサイズ調整
+        # 为显示滚动条而调整尺寸
         self.leg_offset_dialog.set_list_sizer.Layout()
         self.leg_offset_dialog.set_list_sizer.FitInside(self.leg_offset_dialog.scrolled_window)
 
@@ -234,16 +234,16 @@ class LegOffsetSet():
 
         self.set_sizer = wx.StaticBoxSizer(wx.StaticBox(self.window, wx.ID_ANY, "【No.{0}】 {1}".format(set_idx, file_set.rep_model_file_ctrl.data.name[:20])), orient=wx.VERTICAL)
         
-        # 足ＩＫオフセット値
+        # 足ＩＫ偏移值
         self.leg_offset_label = wx.StaticText(self.window, wx.ID_ANY, "（0）", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.leg_offset_label.SetToolTip(u"現在指定されている足ＩＫオフセット値です。実際にこの値が（向きを加味して）足ＩＫに加算されます。")
+        self.leg_offset_label.SetToolTip(u"当前指定的足ＩＫ偏移值。该值将实际（考虑朝向后）加算到足ＩＫ上。")
         self.leg_offset_label.Wrap(-1)
         self.set_sizer.Add(self.leg_offset_label, 0, wx.ALL, 5)
 
         self.leg_offset_slider = FloatSliderCtrl(self.window, wx.ID_ANY, 0, -2, 2, 0.05, self.leg_offset_label, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL)
         self.set_sizer.Add(self.leg_offset_slider, 1, wx.ALL | wx.EXPAND, 5)
 
-    # 現在のファイルセットのハッシュと同じであるかチェック
+    # 检查是否与当前文件集的哈希一致
     def equal_hashdigest(self, now_file_set: SizingFileSet):
         return self.rep_model_digest == now_file_set.rep_model_file_ctrl.data.digest
 
@@ -251,21 +251,21 @@ class LegOffsetSet():
 class LegOffsetDialog(wx.Dialog):
 
     def __init__(self, parent):
-        super().__init__(parent, id=wx.ID_ANY, title="足ＩＫオフセット指定", pos=(-1, -1), size=(800, 500), style=wx.DEFAULT_DIALOG_STYLE, name="LegOffsetDialog")
+        super().__init__(parent, id=wx.ID_ANY, title="足ＩＫ偏移指定", pos=(-1, -1), size=(800, 500), style=wx.DEFAULT_DIALOG_STYLE, name="LegOffsetDialog")
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # 説明文
-        self.description_txt = wx.StaticText(self, wx.ID_ANY, u"足ＩＫの移動量オフセットを設定できます。実際にこの値が（向きを加味して）足ＩＫに加算されます。\n" \
-                                             + u"複数人モーションの場合、あまり大きなオフセットを指定するとフォーメーションが崩れる場合があります。\n" , wx.DefaultPosition, wx.DefaultSize, 0)
+        # 说明文字
+        self.description_txt = wx.StaticText(self, wx.ID_ANY, u"可设置足ＩＫ的移动量偏移。该值将实际（考虑朝向后）加算到足ＩＫ上。\n" \
+                                             + u"多人动作时，若指定的偏移过大，可能会导致队形错乱。\n" , wx.DefaultPosition, wx.DefaultSize, 0)
         self.sizer.Add(self.description_txt, 0, wx.ALL, 5)
 
-        # ボタン
+        # 按钮
         self.btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.ok_btn = wx.Button(self, wx.ID_OK, "OK")
         self.btn_sizer.Add(self.ok_btn, 0, wx.ALL, 5)
 
-        self.calcel_btn = wx.Button(self, wx.ID_CANCEL, "キャンセル")
+        self.calcel_btn = wx.Button(self, wx.ID_CANCEL, "取消")
         self.btn_sizer.Add(self.calcel_btn, 0, wx.ALL, 5)
         self.sizer.Add(self.btn_sizer, 0, wx.ALL, 5)
 
@@ -276,18 +276,18 @@ class LegOffsetDialog(wx.Dialog):
                                                  wx.FULL_REPAINT_ON_RESIZE | wx.VSCROLL | wx.ALWAYS_SHOW_SB)
         self.scrolled_window.SetScrollRate(5, 5)
 
-        # 足ＩＫオフセットセット用基本Sizer
+        # 足ＩＫ偏移集用的基本布局器
         self.set_list_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # スクロールバーの表示のためにサイズ調整
+        # 为显示滚动条而调整尺寸
         self.scrolled_window.SetSizer(self.set_list_sizer)
         self.scrolled_window.Layout()
         self.sizer.Add(self.scrolled_window, 1, wx.ALL | wx.EXPAND, 5)
         self.SetSizer(self.sizer)
         self.sizer.Layout()
         
-        # 画面中央に表示
+        # 显示在屏幕中央
         self.CentreOnScreen()
         
-        # 最初は隠しておく
+        # 初始状态隐藏
         self.Hide()

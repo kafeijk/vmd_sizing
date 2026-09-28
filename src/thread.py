@@ -5,7 +5,7 @@ import datetime
 from functools import wraps
 
 class SimpleThread(threading.Thread):
-    """呼び出し可能オブジェクト（関数など）を実行するだけのスレッド"""
+    """仅执行可调用对象（函数等）的线程"""
     def __init__(self, acallable):
         self.acallable = acallable
         self._result = None
@@ -19,9 +19,9 @@ class SimpleThread(threading.Thread):
 
 def task_takes_time(acallable):
     """
-    関数デコレータ
-    acallable本来の処理は別スレッドで実行しながら、
-    ウィンドウを更新するwx.YieldIfNeededを呼び出し続けるようにする
+    函数装饰器
+    在另一线程中执行 acallable 原本的处理的同时，
+    持续调用用于更新窗口的 wx.YieldIfNeeded
     """
     @wraps(acallable)
     def f():
@@ -38,8 +38,8 @@ class Frame(wx.Frame):
         wx.Frame.__init__(self, parent, id, title, size=(380, 200))
 
         sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.csv_btn_ctrl = wx.Button(self, wx.ID_ANY, u"CSV変換実行", wx.DefaultPosition, wx.Size(200, 50), 0)
-        self.csv_btn_ctrl.SetToolTip(u"VMDをCSVに変換します。")
+        self.csv_btn_ctrl = wx.Button(self, wx.ID_ANY, u"CSV转换执行", wx.DefaultPosition, wx.Size(200, 50), 0)
+        self.csv_btn_ctrl.SetToolTip(u"将VMD转换为CSV。")
         self.csv_btn_ctrl.Bind(wx.EVT_BUTTON, self.OnButton)
         sizer_1.Add(self.csv_btn_ctrl, 0, wx.ALL, 5)
 
@@ -53,7 +53,7 @@ class Frame(wx.Frame):
     def OnButton(self, event):
         @task_takes_time
         def doit():
-            #何か時間がかかる処理をする
+            #执行一些耗时的处理
             print(datetime.datetime.now())
             time.sleep(1)
             return "spam"
@@ -62,7 +62,7 @@ class Frame(wx.Frame):
 
 
 app = wx.App()
-#デバッグするときはwx.PySimpleApp()を使う
+#调试时使用 wx.PySimpleApp()
 #app = wx.PySimpleApp()
 Frame(None, wx.ID_ANY, 'wxthr.py')
 app.MainLoop()

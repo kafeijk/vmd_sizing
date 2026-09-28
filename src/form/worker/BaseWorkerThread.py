@@ -38,10 +38,10 @@ class BaseWorkerThread(metaclass=ABCMeta):
         self.is_killed = True
 
     def run(self):
-        # スレッド実行
+        # 线程执行
         self.thread_event()
 
-        # 後処理実行
+        # 执行后处理
         self.post_event()
     
     def post_event(self):
@@ -58,7 +58,7 @@ class BaseWorkerThread(metaclass=ABCMeta):
 
 # https://doloopwhile.hatenablog.com/entry/20090627/1275175850
 class SimpleThread(Thread):
-    """ 呼び出し可能オブジェクト（関数など）を実行するだけのスレッド """
+    """ 仅执行可调用对象（函数等）的线程 """
     def __init__(self, base_thread, acallable):
         self.base_thread = base_thread
         self.acallable = acallable
@@ -74,9 +74,9 @@ class SimpleThread(Thread):
 
 def task_takes_time(acallable):
     """
-    関数デコレータ
-    acallable本来の処理は別スレッドで実行しながら、
-    ウィンドウを更新するwx.YieldIfNeededを呼び出し続けるようにする
+    函数装饰器
+    在另一个线程中执行acallable原本的处理，
+    同时持续调用用于更新窗口的wx.YieldIfNeeded
     """
     @wraps(acallable)
     def f(base_thread):
@@ -89,7 +89,7 @@ def task_takes_time(acallable):
             time.sleep(0.01)
 
             if base_thread.is_killed:
-                # 呼び出し元から停止命令が出ている場合、自分以外の全部のスレッドに終了命令
+                # 调用方发出停止指令时，向除自身以外的所有线程发出结束指令
                 for th in threading.enumerate():
                     if th.ident != threading.current_thread().ident:
                         th._kwargs["is_killed"] = True
@@ -99,7 +99,7 @@ def task_takes_time(acallable):
     return f
 
 
-# コンソールに文字列を出力する
+# 将字符串输出到控制台
 def monitering(console, queue):
     while True:
         try:

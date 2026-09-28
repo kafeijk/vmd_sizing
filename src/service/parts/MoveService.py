@@ -26,18 +26,18 @@ class MoveService():
         with ThreadPoolExecutor(thread_name_prefix="move", max_workers=min(5, self.options.max_workers)) as executor:
             for data_set_idx, data_set in enumerate(self.options.data_set_list):
                 if data_set.motion.motion_cnt <= 0:
-                    # モーションデータが無い場合、処理スキップ
+                    # 没有动作数据时，跳过处理
                     continue
 
-                logger.info("移動補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+                logger.info("移动修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
-                # センターのY軸オフセットを計算
+                # 计算中心的Y轴偏移
                 self.set_center_y_offset(data_set_idx, data_set)
 
-                # センターのZ軸オフセットを計算
+                # 计算中心的Z轴偏移
                 self.set_center_z_offset(data_set_idx, data_set)
 
-                # 足IKのオフセットを計算
+                # 计算腿IK的偏移
                 self.set_leg_ik_offset(data_set_idx, data_set)
 
                 for bone_name in ["全ての親", "センター", "グルーブ", "右足IK親", "左足IK親", "右足ＩＫ", "左足ＩＫ", "右つま先ＩＫ", "左つま先ＩＫ"]:
@@ -69,41 +69,41 @@ class MoveService():
             for fno in fnos:
                 bf = data_set.motion.bones[bone_name][fno]
 
-                # 一旦IK比率をそのまま掛ける
+                # 先按原样乘以IK比例
                 bf.position.setX(bf.position.x() * data_set.xz_ratio)
                 bf.position.setY(bf.position.y() * data_set.y_ratio)
                 bf.position.setZ(bf.position.z() * data_set.xz_ratio)
 
                 _, rep_global_mats = MServiceUtils.calc_global_pos(data_set.rep_model, bone_link, data_set.motion, fno, return_matrix=True)
-                # 該当ボーンのローカル位置
+                # 该骨骼的局部位置
                 local_pos = rep_global_mats[bone_name].inverted() * bf.position
-                # ローカル位置にオフセット調整
+                # 对局部位置进行偏移调整
                 local_pos += data_set.rep_model.bones[bone_name].local_offset
-                # 元に戻す
+                # 恢复原状
                 bf.position = rep_global_mats[bone_name] * local_pos
 
             if len(fnos) > 0:
-                logger.info("移動補正:終了【No.%s - %s】", data_set_idx + 1, bone_name)
+                logger.info("移动修正:完成【No.%s - %s】", data_set_idx + 1, bone_name)
             
             return True
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     def set_leg_ik_offset(self, data_set_idx: int, data_set: MOptionsDataSet):
         target_bones = ["左足", "左足ＩＫ", "右足ＩＫ"]
 
         if set(target_bones).issubset(data_set.org_model.bones) and set(target_bones).issubset(data_set.rep_model.bones):
-            # 足ボーンの差(orgを元にするので比率反転)
+            # 腿骨骼的差值（以org为基准，因此比例反转）
             leg_ratio = 1 / data_set.original_xz_ratio
 
-            # 足IKのオフセット上限
+            # 腿IK的偏移上限
             leg_ik_offset = {"左": MVector3D(), "右": MVector3D()}
             for direction in ["左", "右"]:
                 org_leg_ik_pos = data_set.org_model.bones["{0}足ＩＫ".format(direction)].position
@@ -118,12 +118,12 @@ class MoveService():
                 logger.debug("leg_ik_offset(%s): %s", direction, leg_ik_offset[direction])
 
                 if abs(leg_ik_offset[direction].x() * data_set.original_xz_ratio) > abs(rep_leg_ik_global_pos.x()):
-                    # IKオフセットが、元々の足の位置の一定以上に広がっている場合、縮める
+                    # 若IK偏移相对原本腿部位置扩张超过一定值，则收缩
                     re_x = (rep_leg_ik_global_pos.x() - (leg_ik_offset[direction].x() * data_set.original_xz_ratio)) * data_set.original_xz_ratio
-                    # オフセットの広がり具合が、元々と同じ場合は正、反対の場合、負
+                    # 偏移扩张方向与原本相同时为正，相反时为负
                     leg_ik_offset[direction].setX(re_x * (1 if np.sign(leg_ik_offset[direction].x()) == np.sign(rep_leg_ik_global_pos.x()) else -1))
                 
-                # 指定値加算
+                # 加上指定值
                 specified_leg_offset = 0
                 if data_set_idx in self.options.leg_options.leg_offsets:
                     specified_leg_offset = self.options.leg_options.leg_offsets[data_set_idx] * np.sign(rep_leg_ik_global_pos.x())
@@ -131,26 +131,26 @@ class MoveService():
                 leg_ik_offset[direction].setX(leg_ik_offset[direction].x() + specified_leg_offset)
                 logger.debug("specified_leg_offset(%s): %s -> %s", direction, specified_leg_offset, leg_ik_offset[direction].x())
                 
-            logger.info("【No.%s】IKオフセット(%s): x: %s, z: %s", (data_set_idx + 1), "左足", leg_ik_offset["左"].x(), leg_ik_offset["左"].z())
-            logger.info("【No.%s】IKオフセット(%s): x: %s, z: %s", (data_set_idx + 1), "右足", leg_ik_offset["右"].x(), leg_ik_offset["右"].z())
+            logger.info("【No.%s】IK偏移(%s): x: %s, z: %s", (data_set_idx + 1), "左足", leg_ik_offset["左"].x(), leg_ik_offset["左"].z())
+            logger.info("【No.%s】IK偏移(%s): x: %s, z: %s", (data_set_idx + 1), "右足", leg_ik_offset["右"].x(), leg_ik_offset["右"].z())
 
             if "左足IK親" in data_set.rep_model.bones and "左足IK親" in data_set.motion.bones:
-                # IK親があって使われている場合、IK親にオフセット設定
+                # 存在IK父骨骼且被使用时，为IK父骨骼设置偏移
                 data_set.rep_model.bones["左足IK親"].local_offset = leg_ik_offset["左"]
             else:
                 data_set.rep_model.bones["左足ＩＫ"].local_offset = leg_ik_offset["左"]
 
             if "右足IK親" in data_set.rep_model.bones and "右足IK親" in data_set.motion.bones:
-                # IK親があって使われている場合、IK親にオフセット設定
+                # 存在IK父骨骼且被使用时，为IK父骨骼设置偏移
                 data_set.rep_model.bones["右足IK親"].local_offset = leg_ik_offset["右"]
             else:
                 data_set.rep_model.bones["右足ＩＫ"].local_offset = leg_ik_offset["右"]
 
             return
 
-        logger.info("IKオフセットなし")
+        logger.info("无IK偏移")
 
-    # センターYオフセット計算
+    # 计算中心Y偏移
     def set_center_y_offset(self, data_set_idx: int, data_set: MOptionsDataSet):
         target_bones = ["左足", "左ひざ", "左足首", "センター"]
 
@@ -159,9 +159,9 @@ class MoveService():
             if data_set_idx in self.options.leg_options.leg_offsets:
                 specified_leg_offset = self.options.leg_options.leg_offsets[data_set_idx]
             
-            # 変換先モデルの足首の位置は足ＩＫオフセットを加味する
+            # 目标模型的脚踝位置需考虑腿ＩＫ偏移
             rep_ankle_pos = data_set.rep_model.bones["左足首"].position - MVector3D(specified_leg_offset, 0, 0)
-            # 元モデルの足の長さ比
+            # 源模型的腿部长度比
             org_leg_upper_length = (data_set.org_model.bones["左ひざ"].position.distanceToPoint(data_set.org_model.bones["左足"].position))
             org_leg_lower_length = (data_set.org_model.bones["左ひざ"].position.distanceToPoint(rep_ankle_pos))
             org_leg_ik_length = (data_set.org_model.bones["左足"].position - rep_ankle_pos).y()
@@ -169,11 +169,11 @@ class MoveService():
             logger.test("org_leg_lower_length: %s", org_leg_lower_length)
             logger.test("org_leg_ik_length: %s", org_leg_ik_length)
 
-            # 足ボーンの長さとIKの長さ比
+            # 腿骨骼长度与IK的长度比
             org_leg_ratio = org_leg_ik_length / (org_leg_upper_length + org_leg_lower_length)
             logger.test("org_leg_ratio: %s", org_leg_ratio)
 
-            # 先モデルの足の長さ比
+            # 目标模型的腿部长度比
             rep_leg_upper_length = (data_set.rep_model.bones["左ひざ"].position.distanceToPoint(data_set.rep_model.bones["左足"].position))
             rep_leg_lower_length = (data_set.rep_model.bones["左ひざ"].position.distanceToPoint(data_set.rep_model.bones["左足首"].position))
             rep_leg_ik_length = (data_set.rep_model.bones["左足"].position - data_set.rep_model.bones["左足首"].position).y()
@@ -181,65 +181,65 @@ class MoveService():
             logger.test("rep_leg_lower_length: %s", rep_leg_lower_length)
             logger.test("rep_leg_ik_length: %s", rep_leg_ik_length)
 
-            # 元モデルの長さ比から、足IKの長さ比を再算出
+            # 根据源模型的长度比，重新计算腿IK的长度比
             rep_recalc_ik_length = org_leg_ratio * (rep_leg_upper_length + rep_leg_lower_length)
             logger.test("rep_recalc_ik_length: %s", rep_recalc_ik_length)
 
             if rep_recalc_ik_length < rep_leg_ik_length:
-                # 再算出した長さが本来のIKの長さより小さい場合（足が曲がってる場合）
+                # 重新计算的长度小于原本IK长度时（腿部弯曲的情况）
                 
-                # センターYを少し縮めて、足の辺比率を同じにする
+                # 略微缩短中心Y，使腿部各边比例一致
                 offset_y = rep_recalc_ik_length - rep_leg_ik_length
 
                 data_set.rep_model.bones["センター"].local_offset.setY(offset_y)
                 logger.test("local_offset %s", data_set.rep_model.bones["センター"].local_offset)
 
-                logger.info("【No.%s】センターYオフセット: %s", (data_set_idx + 1), offset_y)
+                logger.info("【No.%s】中心Y偏移: %s", (data_set_idx + 1), offset_y)
 
                 return
 
-            logger.info("【No.%s】センターYオフセットなし", (data_set_idx + 1))
+            logger.info("【No.%s】无中心Y偏移", (data_set_idx + 1))
 
-    # センターZオフセット計算
+    # 计算中心Z偏移
     def set_center_z_offset(self, data_set_idx: int, data_set: MOptionsDataSet):
         target_bones = ["左つま先ＩＫ", "左足", "左足首", "センター"]
 
         if set(target_bones).issubset(data_set.org_model.bones) and set(target_bones).issubset(data_set.rep_model.bones):
-            # 作成元センターのZ位置
+            # 源模型中心的Z位置
             org_center_z = data_set.org_model.bones["センター"].position.z()
             logger.test("org_center_z: %s", org_center_z)
-            # 作成元左足首のZ位置
+            # 源模型左脚踝的Z位置
             org_ankle_z = data_set.org_model.bones["左足首"].position.z()
             logger.test("org_ankle_z: %s", org_ankle_z)
-            # 作成元左足のZ位置
+            # 源模型左腿的Z位置
             org_leg_z = data_set.org_model.bones["左足"].position.z()
             logger.test("org_leg_z: %s", org_leg_z)
-            # 作成元つま先のZ位置
+            # 源模型脚尖的Z位置
             org_toe_z = data_set.org_model.left_toe_vertex.position.z()
             logger.test("org_toe_z: %s", org_toe_z)
 
-            # 変換先センターのZ位置
+            # 目标模型中心的Z位置
             rep_center_z = data_set.rep_model.bones["センター"].position.z()
             logger.test("rep_center_z: %s", rep_center_z)
-            # 変換先左足首のZ位置
+            # 目标模型左脚踝的Z位置
             rep_ankle_z = data_set.rep_model.bones["左足首"].position.z()
             logger.test("rep_ankle_z: %s", rep_ankle_z)
-            # 変換先左足のZ位置
+            # 目标模型左腿的Z位置
             rep_leg_z = data_set.rep_model.bones["左足"].position.z()
             logger.test("rep_leg_z: %s", rep_leg_z)
-            # 変換先つま先のZ位置
+            # 目标模型脚尖的Z位置
             rep_toe_z = data_set.rep_model.left_toe_vertex.position.z()
             logger.test("rep_toe_z: %s", rep_toe_z)
 
-            # 作成元の足の長さ
+            # 源模型的腿部长度
             org_leg_zlength = org_ankle_z - org_toe_z
-            # 作成元の重心
+            # 源模型的重心
             org_center_gravity = (org_ankle_z - org_leg_z) / (org_ankle_z - org_toe_z)
             logger.test("org_center_gravity %s, org_leg_zlength: %s", org_center_gravity, org_leg_zlength)
 
-            # 変換先の足の長さ
+            # 目标模型的腿部长度
             rep_leg_zlength = rep_ankle_z - rep_toe_z
-            # 変換先の重心
+            # 目标模型的重心
             rep_center_gravity = (rep_ankle_z - rep_leg_z) / (rep_ankle_z - rep_toe_z)
             logger.test("rep_center_gravity %s, rep_leg_zlength: %s", rep_center_gravity, rep_leg_zlength)
 
@@ -247,11 +247,11 @@ class MoveService():
             data_set.rep_model.bones["センター"].local_offset.setZ(local_offset_z)
             logger.test("local_offset %s", data_set.rep_model.bones["センター"].local_offset)
 
-            logger.info("【No.%s】センターZオフセット: %s", (data_set_idx + 1), local_offset_z)
+            logger.info("【No.%s】中心Z偏移: %s", (data_set_idx + 1), local_offset_z)
 
             return
 
-        logger.info("【No.%s】センターZオフセットなし", (data_set_idx + 1))
+        logger.info("【No.%s】无中心Z偏移", (data_set_idx + 1))
 
 
 

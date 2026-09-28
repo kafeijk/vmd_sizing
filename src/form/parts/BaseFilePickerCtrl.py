@@ -20,12 +20,12 @@ logger = MLogger(__name__)
 
 class BaseFilePickerCtrl():
     
-    # 拡張子別ワイルドカード
+    # 按扩展名区分的通配符
     WILDCARD_DICT = {
-        ("vmd", "vpd"): u"VMD/VPDファイル (*.vmd, *.vpd)|*.vmd;*.vpd|すべてのファイル (*.*)|*.*",
-        ("pmx"): u"PMXファイル (*.pmx)|*.pmx|すべてのファイル (*.*)|*.*",
-        ("vmd"): u"VMDファイル (*.vmd)|*.vmd|すべてのファイル (*.*)|*.*",
-        ("csv"): u"CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*",
+        ("vmd", "vpd"): u"VMD/VPD文件 (*.vmd, *.vpd)|*.vmd;*.vpd|所有文件 (*.*)|*.*",
+        ("pmx"): u"PMX文件 (*.pmx)|*.pmx|所有文件 (*.*)|*.*",
+        ("vmd"): u"VMD文件 (*.vmd)|*.vmd|所有文件 (*.*)|*.*",
+        ("csv"): u"CSV文件 (*.csv)|*.csv|所有文件 (*.*)|*.*",
     }
 
     def __init__(self, frame, parent, title, message, file_type, style, tooltip, file_model_spacer=0, \
@@ -54,7 +54,7 @@ class BaseFilePickerCtrl():
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         # ------------------------
-        # ファイルタイトル
+        # 文件标题
         self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.title_ctrl = wx.StaticText(parent, wx.ID_ANY, title, wx.DefaultPosition, wx.DefaultSize, 0)
@@ -62,17 +62,17 @@ class BaseFilePickerCtrl():
 
         self.title_sizer.Add(self.title_ctrl, 0, wx.ALL, 5)
 
-        # ファイルタイトルパーツ（チェックボックス等）
+        # 文件标题部件（复选框等）
         if title_parts_ctrl:
             self.title_parts_ctrl = title_parts_ctrl
             self.title_sizer.Add(self.title_parts_ctrl, 0, wx.ALL, 5)
         
-        # ファイルタイトルパーツ2
+        # 文件标题部件2
         if title_parts2_ctrl:
             self.title_parts2_ctrl = title_parts2_ctrl
             self.title_sizer.Add(self.title_parts2_ctrl, 0, wx.ALL, 5)
 
-        # ファイルモデル
+        # 文件模型
         if file_model_spacer > 0:
             self.file_model_ctrl = FileModelCtrl(parent, self, title, file_model_spacer, self.set_no)
             self.title_sizer.Add(self.file_model_ctrl.spacer_ctrl, 0, wx.ALL, 5)
@@ -81,16 +81,16 @@ class BaseFilePickerCtrl():
         self.sizer.Add(self.title_sizer, 1, wx.EXPAND, 0)
 
         # ------------------------
-        # ファイルコントロール
+        # 文件控件
         self.file_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.file_ctrl = wx.FilePickerCtrl(parent, wx.ID_ANY, wx.EmptyString, message, BaseFilePickerCtrl.WILDCARD_DICT[self.file_type], wx.DefaultPosition, wx.DefaultSize, style)
-        self.file_ctrl.GetPickerCtrl().SetLabel("開く")
+        self.file_ctrl.GetPickerCtrl().SetLabel("打开")
         self.file_ctrl.SetToolTip(tooltip)
 
         self.file_sizer.Add(self.file_ctrl, 1, wx.ALL | wx.EXPAND, 5)
 
-        # ファイルコントロールパーツ（履歴ボタン等）
+        # 文件控件部件（历史按钮等）
         if file_parts_ctrl:
             self.file_parts_ctrl = file_parts_ctrl
             self.file_sizer.Add(self.file_parts_ctrl, 0, wx.ALL, 5)
@@ -98,41 +98,41 @@ class BaseFilePickerCtrl():
         self.sizer.Add(self.file_sizer, 0, wx.EXPAND, 5)
 
         # ------------------------
-        # 「開く」ボタン押下時処理
+        # 按下「打开」按钮时的处理
         self.file_ctrl.GetPickerCtrl().Bind(wx.EVT_BUTTON, self.on_pick_file)
 
-        # D&Dの実装
+        # 拖放功能实现
         self.file_ctrl.SetDropTarget(MFileDropTarget(self, self.is_aster))
 
-        # ファイルパス変更時
+        # 文件路径变更时
         self.file_ctrl.Bind(wx.EVT_FILEPICKER_CHANGED, self.on_change_file)
     
     def on_pick_file(self, event):
         event.Skip()
     
     def on_change_file(self, event):
-        # ダイアログFLGクリア
+        # 清除对话框标志
         self.frame.popuped_finger_warning = False
         
-        # 先頭と末尾の改行は除去
+        # 去除开头和结尾的换行符
         target_path = self.file_ctrl.GetPath().strip()
         logger.test("target_path strip: %s", target_path)
 
-        # 先頭と末尾のダブルクォーテーションは除去
+        # 去除开头和结尾的双引号
         target_path = re.sub(r'^\\+\"(\w)\\', r'\1:\\', target_path)
         target_path = target_path.strip("\"")
         logger.test("target_path strip: %s", target_path)
 
-        # 再設定
+        # 重新设置
         self.file_ctrl.SetPath(target_path)
 
         logger.test("self.file_model_ctrl: %s", self.file_model_ctrl)
 
-        # ファイルモデルがある場合、出力
+        # 存在文件模型时，输出
         if self.file_model_ctrl:
             self.file_model_ctrl.set_model(target_path)
         
-        # アスタリスクを含む場合、オリジナルパス更新
+        # 包含通配符（*）时，更新原始路径
         if "*" in self.file_ctrl.GetPath():
             self.astr_path = "{0}".format(self.file_ctrl.GetPath())
             self.target_paths = [p for p in glob.glob(self.astr_path) if os.path.isfile(p)]
@@ -140,7 +140,7 @@ class BaseFilePickerCtrl():
             self.astr_path = None
             self.target_paths = []
 
-        # 出力ファイル変更対象の場合、出力ファイル更新
+        # 属于输出文件变更对象时，更新输出文件
         if self.is_change_output:
             self.parent.set_output_vmd_path(event, True)
         
@@ -175,10 +175,10 @@ class BaseFilePickerCtrl():
     
     def is_valid(self):
         if self.set_no == 0:
-            # CSVとかのファイルは番号出力なし
+            # CSV之类的文件不输出编号
             display_set_no = ""
         else:
-            display_set_no = "{0}番目の".format(self.set_no)
+            display_set_no = "第{0}个".format(self.set_no)
 
         if self.is_aster and self.set_no <= 1:
             base_file_path = self.file_ctrl.GetPath()
@@ -189,7 +189,7 @@ class BaseFilePickerCtrl():
                 file_path_list = [p for p in glob.glob(base_file_path) if os.path.isfile(p)]
 
             if len(file_path_list) == 0:
-                logger.error("{0}{1}の条件に合致するファイルが見つかりませんでした。\n入力パス: {2}".format(
+                logger.error("{0}未找到符合{1}条件的文件。\n输入路径: {2}".format(
                     display_set_no, self.title, self.file_ctrl.GetPath()), decoration=MLogger.DECORATION_BOX)
                 return False
 
@@ -199,52 +199,52 @@ class BaseFilePickerCtrl():
         
         if not self.is_save and not os.path.exists(file_path):
             if self.required:
-                logger.error("{0}{1}が見つかりませんでした。\n入力パス: {2}".format(
+                logger.error("{0}未找到{1}。\n输入路径: {2}".format(
                     display_set_no, self.title, self.file_ctrl.GetPath()), decoration=MLogger.DECORATION_BOX)
                 return False
             else:
-                # 任意の場合、ファイルパスがなければスルー
+                # 非必填时，若没有文件路径则跳过
                 return True
 
         if not self.is_save and not os.path.isfile(file_path):
-            logger.error("{0}{1}が正常なファイルとして見つかりませんでした。\n入力パス: {2}".format(
+            logger.error("{0}{1}不是正常的文件。\n输入路径: {2}".format(
                 display_set_no, self.title, self.file_ctrl.GetPath()), decoration=MLogger.DECORATION_BOX)
             return False
 
-        # 拡張子
+        # 扩展名
         _, ext = os.path.splitext(os.path.basename(file_path))
 
         if ext[1:].lower() not in self.file_type:
-            logger.error("{0}{1}の拡張子が正しくありません。\n入力パス: {2}\n設定可能拡張子: {3}".format(
+            logger.error("{0}{1}的扩展名不正确。\n输入路径: {2}\n可设置的扩展名: {3}".format(
                 display_set_no, self.title, self.file_ctrl.GetPath(), self.file_type), decoration=MLogger.DECORATION_BOX)
             return False
         
-        # 親ディレクトリ取得
+        # 获取上级目录
         if self.is_save:
-            # 書き込みはそのまま親
+            # 写入时直接取上级目录
             dir_path = os.path.dirname(self.file_ctrl.GetPath())
         else:
-            # 読み取りは解析する
+            # 读取时进行解析
             dir_path = MFileUtils.get_dir_path(self.file_ctrl.GetPath())
 
         if not os.path.exists(dir_path):
-            logger.error("{0}{1}の親フォルダが見つかりませんでした。\n入力パス: {2}".format(
+            logger.error("未找到{0}{1}的上级文件夹。\n输入路径: {2}".format(
                 display_set_no, self.title, dir_path), decoration=MLogger.DECORATION_BOX)
             return False
 
         if not os.path.isdir(dir_path):
-            logger.error("{0}{1}の親フォルダが正常なフォルダとして見つかりませんでした。\n入力パス: {2}".format(
+            logger.error("{0}{1}的上级文件夹不是正常的文件夹。\n输入路径: {2}".format(
                 display_set_no, self.title, dir_path), decoration=MLogger.DECORATION_BOX)
             return False
 
         if not os.access(dir_path, os.W_OK):
-            logger.error("{0}{1}の親フォルダに書き込み権限がありません。\n入力パス: {2}".format(
+            logger.error("{0}没有{1}上级文件夹的写入权限。\n输入路径: {2}".format(
                 display_set_no, self.title, dir_path), decoration=MLogger.DECORATION_BOX)
             return False
 
-        # 出力系の場合、自身のファイル上書き用の書き込み権限
+        # 输出类文件，检查覆盖自身文件所需的写入权限
         if self.is_save and os.path.isfile(self.file_ctrl.GetPath()) and not os.access(self.file_ctrl.GetPath(), os.W_OK):
-            logger.error("{0}{1}に書き込み権限がありません。\n入力パス: {2}".format(
+            logger.error("{0}没有{1}的写入权限。\n输入路径: {2}".format(
                 display_set_no, self.title, self.file_ctrl.GetPath()), decoration=MLogger.DECORATION_BOX)
             return False
 
@@ -253,25 +253,25 @@ class BaseFilePickerCtrl():
     def path(self):
         return self.file_ctrl.GetPath()
 
-    # ファイルセットからの読み込み処理
+    # 从文件集读取的处理
     def load_from_set(self, target, results):
         results[target] = self.load()
 
-    # ファイル読み込み処理
+    # 文件读取处理
     def load(self, file_idx=0, is_check=True):
         if not self.is_set_path():
-            # パスが指定されてない場合、そのまま終了
+            # 未指定路径时，直接结束
             self.data = None
             return True
 
         if not self.is_valid():
-            # 読み込み可能か
+            # 是否可读取
             self.data = None
             return False
 
         try:
             if self.set_no == 0:
-                # CSVとかのファイルは番号出力なし
+                # CSV之类的文件不输出编号
                 display_set_no = ""
             else:
                 display_set_no = "【No.{0}】 ".format(self.set_no)
@@ -285,7 +285,7 @@ class BaseFilePickerCtrl():
                     file_path_list = [p for p in glob.glob(base_file_path) if os.path.isfile(p)]
 
                 if len(file_path_list) == 0:
-                    # 読み込み可能か
+                    # 是否可读取
                     self.data = None
                     return False
 
@@ -295,7 +295,7 @@ class BaseFilePickerCtrl():
 
             file_name, input_ext = os.path.splitext(os.path.basename(file_path))
 
-            # 拡張子別にリーダー生成
+            # 按扩展名生成读取器
             if input_ext.lower() == ".vmd":
                 reader = VmdReader(file_path)
             elif input_ext.lower() == ".vpd":
@@ -303,36 +303,36 @@ class BaseFilePickerCtrl():
             elif input_ext.lower() == ".pmx":
                 reader = PmxReader(file_path, is_check=is_check)
             else:
-                logger.error("%s%s 読み込み失敗(拡張子不正): %s", display_set_no, self.title, os.path.basename(file_path), decoration=MLogger.DECORATION_BOX)
+                logger.error("%s%s 读取失败(扩展名不正确): %s", display_set_no, self.title, os.path.basename(file_path), decoration=MLogger.DECORATION_BOX)
                 return False
             
-            # ハッシュ値取得
+            # 获取哈希值
             new_data_digest = reader.hexdigest()
 
             if isinstance(self.data, Exception):
                 raise self.data
 
-            # 新規データがあり、かつハッシュが違う場合、置き換え
+            # 存在新数据且哈希不同时，进行替换
             if new_data_digest and ((self.data and self.data.digest != new_data_digest) or not self.data):
-                # ハッシュが取得できてて、過去データがないかハッシュが違う場合、読み込み
+                # 已获取到哈希，且无历史数据或哈希不一致时，执行读取
                 self.data = reader.read_data()
                     
-                logger.info("%s%s 読み込み成功: %s", display_set_no, self.title, os.path.basename(file_path))
+                logger.info("%s%s 读取成功: %s", display_set_no, self.title, os.path.basename(file_path))
                 return True
             elif new_data_digest and self.data and self.data.digest == new_data_digest:
-                # ハッシュが同じ場合、そのままスルー
-                logger.info("%s%s 読み込み成功: %s", display_set_no, self.title, os.path.basename(file_path))
+                # 哈希一致时，直接跳过
+                logger.info("%s%s 读取成功: %s", display_set_no, self.title, os.path.basename(file_path))
                 return True
         except MKilledException:
-            logger.warning("読み込み処理を中断します。", decoration=MLogger.DECORATION_BOX)
+            logger.warning("中断读取处理。", decoration=MLogger.DECORATION_BOX)
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message, decoration=MLogger.DECORATION_BOX)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message, decoration=MLogger.DECORATION_BOX)
         except Exception as e:
-            logger.critical("サイジング処理が意図せぬエラーで終了しました。", e, decoration=MLogger.DECORATION_BOX)
+            logger.critical("适配处理因意外错误而结束。", e, decoration=MLogger.DECORATION_BOX)
         finally:
             logging.shutdown()
 
-        logger.error("%s%s 読み込み失敗: %s", display_set_no, self.title, os.path.basename(file_path), decoration=MLogger.DECORATION_BOX)
+        logger.error("%s%s 读取失败: %s", display_set_no, self.title, os.path.basename(file_path), decoration=MLogger.DECORATION_BOX)
         return False
 
 
@@ -349,14 +349,14 @@ class FileModelCtrl():
 
         width = 300 if self.set_no == 1 else 220
 
-        self.txt_ctrl = wx.TextCtrl(parent, wx.ID_ANY, "（未設定）", wx.DefaultPosition, (width, -1), wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS)
+        self.txt_ctrl = wx.TextCtrl(parent, wx.ID_ANY, "（未设置）", wx.DefaultPosition, (width, -1), wx.TE_READONLY | wx.BORDER_NONE | wx.WANTS_CHARS)
         self.txt_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-        self.txt_ctrl.SetToolTip(u"{0}に記録されているモデル名です。\n文字列は選択＆コピー可能です。".format(title))
+        self.txt_ctrl.SetToolTip(u"记录在{0}中的模型名。\n该字符串可选中并复制。".format(title))
 
     def set_model(self, target_path):
         self.txt_ctrl.SetValue("（{0}）".format(self.get_model_name()))
 
-    # VMDのモデル名取得
+    # 获取VMD的模型名
     def get_model_name(self):
         try:
             if self.picker.is_aster:
@@ -368,7 +368,7 @@ class FileModelCtrl():
                     file_path_list = [p for p in glob.glob(base_file_path) if os.path.isfile(p)]
 
                 if len(file_path_list) == 0:
-                    return "取得失敗"
+                    return "获取失败"
 
                 file_path = file_path_list[0]
             else:
@@ -376,7 +376,7 @@ class FileModelCtrl():
 
             file_name, input_ext = os.path.splitext(os.path.basename(file_path))
 
-            model_name = "未設定"
+            model_name = "未设置"
             if input_ext.lower() == ".vmd":
                 reader = VmdReader(file_path)
             elif input_ext.lower() == ".vpd":
@@ -384,20 +384,20 @@ class FileModelCtrl():
             elif input_ext.lower() == ".pmx":
                 reader = PmxReader(file_path)
             else:
-                return "対象外拡張子"
+                return "不支持的扩展名"
             
             try:
                 model_name = reader.read_model_name()
             except Exception:
-                model_name = "取得失敗"
+                model_name = "获取失败"
 
             logger.test("model_name: %s, ", model_name)
 
             return model_name
         except Exception as e:
-            logger.test("get_model_name 失敗", e)
+            logger.test("get_model_name 失败", e)
 
-            return "取得失敗"
+            return "获取失败"
 
 
 class MFileDropTarget(wx.FileDropTarget):
@@ -408,7 +408,7 @@ class MFileDropTarget(wx.FileDropTarget):
         wx.FileDropTarget.__init__(self)
     
     def OnDropFiles(self, x, y, files):
-        # ファイルパスをテキストフィールドに表示
+        # 将文件路径显示到文本框
         file_name, input_ext = os.path.splitext(os.path.basename(files[0]))
 
         logger.test("file_name: %s, input_ext: %s", file_name, input_ext)
@@ -417,30 +417,30 @@ class MFileDropTarget(wx.FileDropTarget):
         logger.test("test: %s", input_ext[1:].lower() in self.parent.file_type)
 
         if input_ext[1:].lower() in self.parent.file_type:
-            # 入力拡張子が許容拡張子の場合、設定
+            # 输入扩展名属于允许的扩展名时，进行设置
 
-            # 拡張子を許容してたらOK
+            # 扩展名被允许则OK
             self.parent.file_ctrl.SetPath(files[0])
 
-            # ファイル変更処理
+            # 文件变更处理
             self.parent.on_change_file(wx.FileDirPickerEvent())
 
             return True
         
-        # アスタリスクOKの場合、フォルダの投入を許可する
+        # 允许通配符（*）时，允许拖入文件夹
         if os.path.isdir(files[0]) and self.is_aster:
-            # フォルダを投入された場合、フォルダ内にvmdもしくはvpdがあれば、受け付ける
+            # 拖入文件夹时，若文件夹内存在vmd或vpd文件则接受
             child_file_name_exts = [os.path.splitext(filename) for filename in os.listdir(files[0]) if os.path.isfile(os.path.join(files[0], filename))]
 
             for ft in self.parent.file_type:
-                # 親の許容ファイルパス
+                # 父级允许的文件路径
                 for (child_file_name, child_file_ext) in child_file_name_exts:
                     if child_file_ext[1:].lower() == ft:
-                        # 子のファイル拡張子が許容拡張子である場合、アスタリスクを入れて許可する
+                        # 子文件的扩展名属于允许的扩展名时，加上通配符并允许
                         astr_path = "{0}\\*.{1}".format(files[0], ft)
                         self.parent.file_ctrl.SetPath(astr_path)
 
-                        # ファイル変更処理
+                        # 文件变更处理
                         self.parent.on_change_file(wx.FileDirPickerEvent())
 
                         return True
@@ -449,7 +449,7 @@ class MFileDropTarget(wx.FileDropTarget):
         if type(self.parent.file_type) == tuple:
             display_file_type = ",".join(self.parent.file_type)
 
-        logger.error("{0}の拡張子が正しくありません。\n入力ファイル拡張子: {1}\n設定可能拡張子: {2}".format(self.parent.title, input_ext, display_file_type), decoration=MLogger.DECORATION_BOX)
+        logger.error("{0}的扩展名不正确。\n输入文件扩展名: {1}\n可设置的扩展名: {2}".format(self.parent.title, input_ext, display_file_type), decoration=MLogger.DECORATION_BOX)
 
-        # 許容拡張子外の場合、不許可
+        # 不属于允许的扩展名时，不允许
         return False

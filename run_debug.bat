@@ -1,12 +1,14 @@
 @echo off
-rem --- 
-rem ---  vmdデータのトレースモデルを変換
-rem --- 
-
-rem ---  カレントディレクトリを実行先に変更
+chcp 65001 >nul
+rem ==========================================
+rem ---  VMDﾊﾊﾅ茱ｺﾒﾔｵﾔﾄ｣ﾊｽﾆｯ｣ｨﾊ莎�ﾏｸ   ---
+rem ---  ﾈﾕﾖｾ｣ｬﾓﾃﾓﾚﾅﾅｲ鯰ﾊﾌ筌ｩ               ---
+rem ==========================================
 cd /d %~dp0
-
 cls
 
-src\setup.bat && activate vmdsizing_cython && python src\executor.py --out_log 1 --verbose 10 --is_saving 1
+call D:\ProgramData\miniconda\Scripts\activate.bat vmdsizing_cn
 
+python src\executor.py --out_log 1 --verbose 10 --is_saving 1
+
+pause

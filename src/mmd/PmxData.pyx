@@ -113,7 +113,7 @@ class Qdef(Deform):
         return Qdef(self.index0, self.index1, self.weight0, self.sdef_c, self.sdef_r0, self.sdef_r1)
 
 
-# 頂点構造 ----------------------------
+# 顶点结构 ----------------------------
 cdef class Vertex:
 
     def __init__(self, index, position, normal, uv, extended_uvs, deform, edge_factor):
@@ -147,7 +147,7 @@ cdef class Vertex:
 
         return False
     
-    # 最もウェイトが乗ってるボーンINDEXとそのウェイト（全ボーン対象）
+    # 获取权重最高的骨骼INDEX及其权重（所有骨骼）
     def get_max_deform_by_all(self):
         if type(self.deform) is Bdef2 or type(self.deform) is Sdef or type(self.deform) is Qdef:
             weights = [self.deform.weight0, 1 - self.deform.weight0]
@@ -1210,16 +1210,16 @@ cdef class PmxModel:
 
         target_bones = ["左腕", "左ひじ", "左手首", "右腕", "右ひじ", "右手首"]
 
-        cannot_sizing = "腕系処理をスキップします。\n腕系処理（腕スタンス補正・捩り分散・接触回避・位置合わせ）を実行したい場合、\n腕タブのチェックスキップFLGをONにして再実行してください。"
+        cannot_sizing = "将跳过手臂相关处理。\n如需执行手臂相关处理（手臂站姿修正・扭转分散・接触规避・位置对齐），\n请在手臂标签页将「跳过检查」开关设为ON后重新运行。"
 
         if not set(target_bones).issubset(self.bones.keys()):
-            logger.warning("腕・ひじ・手首の左右ボーンが揃ってないため、%s\nモデル: %s", cannot_sizing, self.name, decoration=MLogger.DECORATION_BOX)
+            logger.warning("由于手臂・肘・手腕的左右骨骼不完整，%s\n模型: %s", cannot_sizing, self.name, decoration=MLogger.DECORATION_BOX)
             return False
         
         for bone_name in self.bones.keys():
             if ("腕IK" in bone_name or "腕ＩＫ" in bone_name or "うでIK" in bone_name or "うでＩＫ" in bone_name or "腕XIK" in bone_name):
                 # 腕IKが入ってて、かつそれが表示されてる場合、NG
-                logger.warning("モデルに「腕IK」に類するボーンが含まれているため、%s\nモデル: %s", cannot_sizing, self.name, decoration=MLogger.DECORATION_BOX)
+                logger.warning("模型中存在类似「腕IK」的骨骼，因此%s\n模型: %s", cannot_sizing, self.name, decoration=MLogger.DECORATION_BOX)
                 return False
 
         return True
@@ -1253,7 +1253,7 @@ cdef class PmxModel:
                 return reversed_links
         
         # 最後まで回しても取れなかった場合、エラー
-        raise SizingException("ボーンリンクの生成に失敗しました。モデル「%s」に「%s」のボーンがあるか確認してください。" % (self.name, ",".join(target_bone_names)))
+        raise SizingException("骨骼链接生成失败。请确认模型「%s」中是否存在「%s」骨骼。" % (self.name, ",".join(target_bone_names)))
 
     # リンク生成
     def create_link_2_top(self, target_bone_name: str, links: BoneLinks, is_defined: bool):
@@ -1277,7 +1277,7 @@ cdef class PmxModel:
         if is_defined:
             # 定義済みの場合
             if target_bone_name not in self.PARENT_BORN_PAIR:
-                raise SizingException("ボーンリンクの生成に失敗しました。モデル「%s」の「%s」ボーンが準標準までの構造ではない可能性があります。" % (self.name, target_bone_name))
+                raise SizingException("骨骼链接生成失败。模型「%s」的「%s」骨骼可能不是准标准及以下的结构。" % (self.name, target_bone_name))
                 
             for pname in self.PARENT_BORN_PAIR[target_bone_name]:
                 # 親子関係のボーンリストから親ボーンが存在した場合
@@ -1300,9 +1300,9 @@ cdef class PmxModel:
         try:
             return self.create_link_2_top(parent_name, links, is_defined)
         except RecursionError:
-            raise SizingException("ボーンリンクの生成に失敗しました。\nモデル「{0}」の「{1}」ボーンで以下を確認してください。\n" \
-                                  + "・同じ名前のボーンが複数ないか（ボーンのINDEXがズレるため、サイジングに失敗します）\n" \
-                                  + "・親ボーンに自分の名前と同じ名前のボーンが指定されていないか\n※ PMXEditorの「PMXデータの状態検証」から確認できます。".format(self.name, target_bone_name))
+            raise SizingException("骨骼链接生成失败。\n请检查模型「{0}」的「{1}」骨骼以下几点：\n" \
+                                  + "・是否存在多个同名骨骼（骨骼INDEX会偏移，导致适配失败）\n" \
+                                  + "・父骨骼是否指定了与自己同名的骨骼\n※ 可通过 PMXEditor 的「PMX数据状态检查」确认。".format(self.name, target_bone_name))
     
     # 子孫ボーンリスト取得
     def get_child_bones(self, target_bone: Bone, bone_list=None):
@@ -1742,7 +1742,7 @@ cdef class PmxModel:
                 bone_idx_list.append(bv.index)
 
         if len(bone_idx_list) == 0:
-            logger.test("bone_name: %s, ウェイト頂点がない", bone_name_list)
+            logger.test("bone_name: %s, 没有权重顶点", bone_name_list)
             # ウェイトボーンがない場合、初期値
             return MVector3D(), None, MVector3D(), None, MVector3D(), None, MVector3D(), None, MVector3D(), None, MVector3D(), None, MVector3D(), None
 

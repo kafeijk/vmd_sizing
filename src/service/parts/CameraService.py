@@ -23,11 +23,11 @@ from utils.MException import SizingException, MKilledException
 
 logger = MLogger(__name__, level=1)
 
-# 顔系ボーン名
+# 头部系骨骼名
 HEAD_BONE_NAMES = ["頭頂実体", "頭", "首", "左目", "右目", "首根元"]
-# 体幹ボーン名
+# 躯干骨骼名
 TRUNK_BONE_NAMES = ["上半身2", "上半身"]
-# 足底ボーン名
+# 足底骨骼名
 LEG_BOTTOM_BONE_NAMES = ["右足底実体", "左足底実体"]
 
 
@@ -36,16 +36,16 @@ class CameraService:
         self.options = options
 
     def execute(self):
-        logger.info("カメラ補正　", decoration=MLogger.DECORATION_LINE)
+        logger.info("相机修正　", decoration=MLogger.DECORATION_LINE)
 
         try:
-            # 腕処理対象データセットを取得
+            # 获取处理对象数据集
             self.target_data_set_idxs = self.get_target_set_idxs()
             logger.test("target_data_set_idxs: %s", self.target_data_set_idxs)
 
             if len(self.target_data_set_idxs) == 0:
-                # データセットがない場合、処理スキップ
-                logger.warning("カメラ補正ができるファイルセットが見つからなかったため、カメラ補正をスキップします。", decoration=MLogger.DECORATION_BOX)
+                # 没有数据集时，跳过处理
+                logger.warning("未找到可进行相机修正的文件组合，因此跳过相机修正。", decoration=MLogger.DECORATION_BOX)
                 return True
 
             self.camera_options = {}
@@ -57,21 +57,21 @@ class CameraService:
             for fno in sorted(self.options.camera_motion.cameras.keys()):
                 past_cf = VmdCameraFrame()
                 cf = self.options.camera_motion.cameras[fno]
-                # 1キーフレごとに見ていく（同一キーフレの可能性があるので、並列化不可）
+                # 逐关键帧处理（可能存在同一关键帧，因此无法并行化）
                 if prev_fno >= 0:
-                    # 前回と同じカメラ位置の場合、前回のサイジング済みカメラ位置コピー
+                    # 与上一次相机位置相同时，复制上一次已适配的相机位置
                     past_cf = self.options.camera_motion.cameras[prev_fno]
                     if (
                         past_cf.org_length == cf.length
                         and past_cf.org_position == cf.position
                         and past_cf.euler == cf.euler
                     ):
-                        logger.info("%sフレーム目 前位置・距離コピー", fno)
+                        logger.info("%s帧 复制前一位置与距离", fno)
                         cf.position = past_cf.position.copy()
                         cf.length = past_cf.length
                         continue
 
-                # 比率計算
+                # 比例计算
                 (
                     org_inner_global_poses,
                     org_inner_square_poses,
@@ -84,7 +84,7 @@ class CameraService:
                     (bottom_data_set_idx, bottom_bone_name),
                 ) = self.calc_camera_ratio(fno, cf)
 
-                # カメラサイジング実行
+                # 执行相机适配
                 self.execute_rep_camera(
                     fno,
                     cf,
@@ -118,15 +118,15 @@ class CameraService:
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而终止。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
 
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而终止。\n\n%s", traceback.format_exc())
             raise e
 
-    # 変換先モデル用カメラ作成
+    # 为目标模型创建相机
     def execute_rep_camera(
         self,
         fno: int,
@@ -151,8 +151,8 @@ class CameraService:
 
         # ------------------------
 
-        # 画面内に映ってるボーンINDEXの中央値を仮の中央座標とする
-        # 複数人モーションのカメラの場合を想定して、上下端は見ない
+        # 将画面内骨骼INDEX的中值作为暂定中心坐标
+        # 考虑到多人动作的相机，不查看上下端
         org_target_vec = MVector3D(np.mean(np.array(list(org_inner_global_poses.values())), axis=0))
         rep_target_vec = MVector3D(np.mean(np.array(list(rep_inner_global_poses.values())), axis=0))
 
@@ -165,16 +165,16 @@ class CameraService:
         mat_origin.translate(cf.position)
         mat_origin.rotate(camera_qq)
         mat_origin.translate(MVector3D(0, 0, cf.length))
-        # 距離を加味したカメラの原点（距離0でこの位置に合わせると注視点が合う）
+        # 考虑了距离的相机原点（若以距离0对齐到该位置，则注视点吻合）
         camera_origin = mat_origin * MVector3D()
         logger.test("camera_origin: %s", camera_origin)
 
-        # ボーンの相対位置
+        # 骨骼的相对位置
         org_nearest_relative_vec = camera_origin - org_target_vec
         logger.debug("org_target_vec: %s", org_target_vec.to_log())
         logger.debug("org_nearest_relative_vec: %s", org_nearest_relative_vec.to_log())
 
-        # 距離0の場合のカメラの位置を算出
+        # 计算距离为0时的相机位置
         cf_pos = rep_target_vec + (org_nearest_relative_vec * ratio)
         logger.debug("cf_pos: %s", cf_pos)
 
@@ -182,10 +182,10 @@ class CameraService:
         pos_ratio = ratio
 
         if camera_length < 5:
-            # カメラの距離を再設定
-            # 可動範囲内に収める（2020/10/22）
+            # 重新设定相机距离
+            # 收进可动范围内（2020/10/22）
             length_ratio = min(camera_length, max(1 / camera_length, ratio))
-            # 原点用比率は、距離が可動範囲内ならば比率そのまま、範囲外ならば体格比率まで
+            # 原点用比例：距离在可动范围内时沿用该比例，超出范围时取体格比例
             pos_ratio = (
                 ratio
                 if length_ratio == ratio
@@ -200,16 +200,16 @@ class CameraService:
         mat_len.translate(cf_pos)
         mat_len.rotate(camera_qq)
         mat_len.translate(MVector3D(0, 0, -cf.length * pos_ratio))
-        # 距離を除いたカメラの原点に合わせる
+        # 对齐到去除距离后的相机原点
         camera_length_origin = mat_len * MVector3D()
         logger.test("camera_length_origin: %s", camera_length_origin)
 
-        # 距離を除いたカメラの原点を再設定
+        # 重新设定去除距离后的相机原点
         cf.position = camera_length_origin
 
         cf.length = cf.length * length_ratio
 
-        # 比率を保持
+        # 保存比例
         cf.ratio = length_ratio
 
         offset_length = 0
@@ -218,8 +218,8 @@ class CameraService:
         # ------------------------
         rep_inner_square_poses = {}
 
-        # この時点の距離と位置で変換先モデルの体幹＋目の映り具合をチェック（上下が分かってないと大きさ取れない）
-        # 距離制限が掛かっている場合、スルー
+        # 以当前的距离和位置检查目标模型的躯干＋眼睛的入镜情况（不知道上下就无法取得大小）
+        # 有距离限制时跳过
         if (
             top_data_set_idx >= 0
             and top_bone_name
@@ -227,11 +227,11 @@ class CameraService:
             and bottom_bone_name
             and camera_length == 5
         ):
-            # 先モデル上下グローバル位置
+            # 目标模型上下全局位置
             rep_top_pos = rep_inner_global_poses[(top_data_set_idx, top_bone_name)]
             rep_bottom_pos = rep_inner_global_poses[(bottom_data_set_idx, bottom_bone_name)]
 
-            # 先モデル上下プロジェクション正規位置
+            # 目标模型上下投影归一化位置
             rep_inner_square_poses[(top_data_set_idx, top_bone_name)] = self.calc_project_square_vec(
                 cf, MVector3D(rep_top_pos)
             ).data()
@@ -239,7 +239,7 @@ class CameraService:
                 cf, MVector3D(rep_bottom_pos)
             ).data()
 
-            # 上下のY差
+            # 上下的Y差
             org_diff = (
                 org_inner_square_poses[(bottom_data_set_idx, bottom_bone_name)][1]
                 - org_inner_square_poses[(top_data_set_idx, top_bone_name)][1]
@@ -249,7 +249,7 @@ class CameraService:
                 - rep_inner_square_poses[(top_data_set_idx, top_bone_name)][1]
             )
 
-            # 上下に取ったセットの全長比率をベースに距離を調整する
+            # 以上下取得的组合的全长比例为基础调整距离
             length_unit = (
                 (
                     (
@@ -263,18 +263,18 @@ class CameraService:
 
             cnt = 0
             while cnt < 20 and rep_diff - 0.1 >= org_diff:
-                # 上下のY差を揃える
+                # 对齐上下的Y差
 
-                # 距離を遠ざける
+                # 拉远距离
                 cf.length += length_unit
                 offset_length += length_unit
 
                 if cnt % 9 == 0:
-                    # 一定回数時には視野角も遠ざける
+                    # 达到一定次数时也拉远视场角
                     cf.angle += 1
                     offset_angle += 1
 
-                # 先モデル上下プロジェクション正規位置
+                # 目标模型上下投影归一化位置
                 rep_inner_square_poses[(top_data_set_idx, top_bone_name)] = self.calc_project_square_vec(
                     cf, MVector3D(rep_top_pos)
                 ).data()
@@ -282,7 +282,7 @@ class CameraService:
                     cf, MVector3D(rep_bottom_pos)
                 ).data()
 
-                # 上下のY差
+                # 上下的Y差
                 rep_diff = (
                     rep_inner_square_poses[(bottom_data_set_idx, bottom_bone_name)][1]
                     - rep_inner_square_poses[(top_data_set_idx, top_bone_name)][1]
@@ -291,7 +291,7 @@ class CameraService:
                 cnt += 1
 
         logger.info(
-            "%sフレーム目 原点比率: %s, 距離比率: %s, 注視点: %s-%s, 上辺: %s-%s, 下辺: %s-%s, 距離オフセット: %s, 視野角オフセット: %s",
+            "%s帧 原点比例: %s, 距离比例: %s, 注视点: %s-%s, 上边: %s-%s, 下边: %s-%s, 距离偏移: %s, 视场角偏移: %s",
             cf.fno,
             round(pos_ratio, 5),
             round(length_ratio, 5),
@@ -305,21 +305,21 @@ class CameraService:
             offset_angle,
         )
 
-    # カメラ倍率計算
+    # 相机倍率计算
     def calc_camera_ratio(self, fno: int, cf: VmdCameraFrame):
-        # 各データのグローバル位置算出
+        # 计算各数据的全局位置
         all_org_global_poses = {}
-        # 各データのプロジェクション座標位置
+        # 各数据的投影坐标位置
         all_org_project_square_poses = {}
 
-        # 最も注視点に近いINDEX
+        # 最接近注视点的INDEX
         nearest_data_set_idx = -1
         nearest_bone_name = None
         ratio = 0
 
-        # まず全体のグローバル位置とプロジェクション座標正規位置を算出
+        # 先计算整体的全局位置与投影坐标归一化位置
         self.calc_org_project_square_poses(fno, cf, 0, -1, all_org_global_poses, all_org_project_square_poses)
-        # 画面内に映っているINDEXリスト
+        # 画面内的INDEX列表
         org_inner_global_poses, org_inner_square_poses = self.calc_inner_index(
             fno, all_org_global_poses, all_org_project_square_poses, None, 0, 0.1
         )
@@ -994,9 +994,9 @@ class CameraService:
 
     def prepare_ratio(self, data_set_idx: int, org_model: PmxModel, rep_model: PmxModel):
         data_set = self.options.data_set_list[data_set_idx]
-        org_total_height, org_face_length, org_heads = self.calc_ratio(data_set_idx, org_model, "作成元", 0)
+        org_total_height, org_face_length, org_heads = self.calc_ratio(data_set_idx, org_model, "源", 0)
         rep_total_height, rep_face_length, rep_heads = self.calc_ratio(
-            data_set_idx, rep_model, "変換先", data_set.camera_offset_y
+            data_set_idx, rep_model, "目标", data_set.camera_offset_y
         )
 
         # 全身比率
@@ -1006,14 +1006,14 @@ class CameraService:
         head_ratio = rep_face_length / org_face_length
 
         logger.info(
-            "【No.%s】作成元モデル 全長: %s, 頭身: %s, 顔の大きさ: %s",
+            "【No.%s】源模型 全长: %s, 头身: %s, 脸部大小: %s",
             (data_set_idx + 1),
             round(org_total_height, 5),
             round(org_heads, 5),
             round(org_face_length, 5),
         )
         logger.info(
-            "【No.%s】変換先モデル 全長: %s, 頭身: %s, 顔の大きさ: %s, Yオフセット: %s",
+            "【No.%s】目标模型 全长: %s, 头身: %s, 脸部大小: %s, Y偏移: %s",
             (data_set_idx + 1),
             round(rep_total_height, 5),
             round(rep_heads, 5),
@@ -1035,13 +1035,13 @@ class CameraService:
     def calc_ratio(self, data_set_idx: int, model: PmxModel, model_type: str, camera_offset_y: float):
         if model.head_top_vertex.index < 0:
             logger.warning(
-                "【No.%s】%sモデルの頭頂頂点INDEXが見つからなかったため、頭ボーン＋上半身半分の位置で代用します。\n" + "全長Yオフセットで頭頂位置を調整すると、カメラの見切れ等が少なくなります。",
+                "【No.%s】未找到%s模型的头顶顶点INDEX，因此用头部骨骼＋上半身一半的位置代替。\n" + "用全长Y偏移调整头顶位置，可减少相机画面被裁切等情况。",
                 (data_set_idx + 1),
                 model_type,
             )
         else:
             logger.info(
-                "【No.%s】%sモデルの頭頂頂点INDEX: %s (%s)",
+                "【No.%s】%s模型的头顶顶点INDEX: %s (%s)",
                 (data_set_idx + 1),
                 model_type,
                 model.head_top_vertex.index,

@@ -176,20 +176,20 @@ cdef tuple c_separate_local_qq(int fno, str bone_name, MQuaternion qq, MVector3D
     cdef MMatrix4x4 mat_x1 = MMatrix4x4()
     mat_x1.setToIdentity()              # 初期化
     mat_x1.rotate(qq)                   # 入力qq
-    mat_x1.translate(global_x_axis)     # グローバル軸方向に伸ばす
+    mat_x1.translate(global_x_axis)     # 沿全局轴方向延长
     cdef MVector3D mat_x1_vec = mat_x1 * MVector3D()
 
-    # YZの回転量（自身のねじれを無視する）
+    # YZ的旋转量（自身のねじれを無視する）
     cdef MQuaternion yz_qq = MQuaternion.rotationTo(global_x_axis, mat_x1_vec)
 
     # 除去されたX成分を求める
     cdef MMatrix4x4 mat_x2 = MMatrix4x4()
     mat_x2.setToIdentity()              # 初期化
-    mat_x2.rotate(qq)                   # 元々の回転量
+    mat_x2.rotate(qq)                   # 原本的旋转量
 
     cdef MMatrix4x4 mat_x3 = MMatrix4x4()
     mat_x3.setToIdentity()              # 初期化
-    mat_x3.rotate(yz_qq)                # YZの回転量
+    mat_x3.rotate(yz_qq)                # YZ的旋转量
 
     cdef MQuaternion x_qq = (mat_x2 * mat_x3.inverted()).toQuaternion()
 
@@ -197,12 +197,12 @@ cdef tuple c_separate_local_qq(int fno, str bone_name, MQuaternion qq, MVector3D
 
     cdef MMatrix4x4 mat_z1 = MMatrix4x4()
     mat_z1.setToIdentity()              # 初期化
-    mat_z1.rotate(yz_qq)                # YZの回転量
-    mat_z1.rotate(global2local_qq)      # グローバル軸の回転量からローカルの回転量に変換
-    mat_z1.translate(local_axis)        # ローカル軸方向に伸ばす
+    mat_z1.rotate(yz_qq)                # YZ的旋转量
+    mat_z1.rotate(global2local_qq)      # 将全局轴的旋转量转换为局部的旋转量
+    mat_z1.translate(local_axis)        # 沿局部轴方向延长
     
     cdef MVector3D mat_z1_vec = mat_z1 * MVector3D()
-    mat_z1_vec.setZ(0)                  # Z方向の移動量を潰す
+    mat_z1_vec.setZ(0)                  # 消除Z方向的移动量
 
     # ローカル軸からZを潰した移動への回転量
     cdef MQuaternion local_z_qq = MQuaternion.rotationTo(local_axis, mat_z1_vec)
@@ -210,8 +210,8 @@ cdef tuple c_separate_local_qq(int fno, str bone_name, MQuaternion qq, MVector3D
     # ボーンローカル座標系の回転をグローバル座標系の回転に戻す
     cdef MMatrix4x4 mat_z2 = MMatrix4x4()
     mat_z2.setToIdentity()              # 初期化
-    mat_z2.rotate(local_z_qq)           # ローカル軸上のZ回転
-    mat_z2.rotate(local2global_qq)      # ローカル軸上からグローバル軸上に変換
+    mat_z2.rotate(local_z_qq)           # 局部轴上的Z旋转
+    mat_z2.rotate(local2global_qq)      # 从局部轴转换到全局轴
 
     cdef MQuaternion z_qq = mat_z2.toQuaternion()
 
@@ -219,7 +219,7 @@ cdef tuple c_separate_local_qq(int fno, str bone_name, MQuaternion qq, MVector3D
     
     cdef MMatrix4x4 mat_y1 = MMatrix4x4()
     mat_y1.setToIdentity()              # 初期化
-    mat_y1.rotate(yz_qq)                # グローバルYZの回転量
+    mat_y1.rotate(yz_qq)                # 全局YZ的旋转量
 
     cdef MMatrix4x4 mat_y2 = MMatrix4x4()
     mat_y2.setToIdentity()              # 初期化

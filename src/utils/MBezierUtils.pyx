@@ -5,34 +5,35 @@ from utils.MLogger import MLogger # noqa
 import numpy as np
 cimport numpy as np
 import bezier
-cimport bezier._curve
+# 注：原工程曾 cimport bezier._curve，但代码只使用 Python 层 bezier.Curve API，
+# 且 bezier 的 wheel 不附带 C 头文件，故移除该 cimport 以免编译失败。
 
 logger = MLogger(__name__, level=1)
 
-# MMDでの補間曲線の最大値
+# MMD中插值曲线的最大值
 INTERPOLATION_MMD_MAX = 127
-# MMDの線形補間
+# MMD的线性插值
 LINEAR_MMD_INTERPOLATION = [MVector2D(0, 0), MVector2D(20, 20), MVector2D(107, 107), MVector2D(127, 127)]
 
-# 回転補間曲線のインデックス
+# 旋转插值曲线的索引
 R_x1_idxs = [3, 18, 33, 48]
 R_y1_idxs = [7, 22, 37, 52]
 R_x2_idxs = [11, 26, 41, 56]
 R_y2_idxs = [15, 30, 45, 60]
 
-# X移動補間曲線のインデックス
+# X移动插值曲线的索引
 MX_x1_idxs = [0, 0, 0, 0]
 MX_y1_idxs = [19, 34, 49, 4]
 MX_x2_idxs = [23, 38, 53, 8]
 MX_y2_idxs = [27, 42, 57, 12]
 
-# Y移動補間曲線のインデックス
+# Y移动插值曲线的索引
 MY_x1_idxs = [1, 16, 16, 16]
 MY_y1_idxs = [5, 35, 50, 20]
 MY_x2_idxs = [9, 39, 54, 24]
 MY_y2_idxs = [13, 43, 58, 28]
 
-# Z移動補間曲線のインデックス
+# Z移动插值曲线的索引
 MZ_x1_idxs = [2, 17, 32, 32]
 MZ_y1_idxs = [6, 21, 51, 36]
 MZ_x2_idxs = [10, 25, 55, 40]
@@ -76,7 +77,7 @@ cdef double calc_catmull_rom_one_point(double x, double v0, double v1, double v2
     return (((c4 * x + c3) * x + c2) * x + c1)
 
 
-# 指定したすべての値をカトマル曲線として計算する
+# 将指定的所有值作为 Catmull-Rom 曲线计算
 cpdef np.ndarray calc_value_from_catmullrom(str bone_name, list fnos, list values):
     cdef np.ndarray[np.float_t, ndim=1] y_intpol
     cdef list prev_list, next_list
@@ -129,19 +130,19 @@ cpdef np.ndarray calc_value_from_catmullrom(str bone_name, list fnos, list value
 
         return y_intpol
     except Exception as e:
-        # エラーレベルは落として表に出さない
+        # 降低错误级别，不对外显示
         logger.debug("カトマル曲線値生成失敗", e)
         return np.empty(1)
 
 
-# 指定したすべての値を通るカトマル曲線からベジェ曲線を計算し、MMD補間曲線範囲内に収められた場合、そのベジェ曲線を返す
+# 由经过所有指定值的 Catmull-Rom 曲线计算贝塞尔曲线，若能收敛在MMD插值曲线范围内，则返回该贝塞尔曲线
 def join_value_2_bezier(fno: int, bone_name: str, values: list, offset=0, diff_limit=0.01):
     return_tuple = c_join_value_2_bezier(fno, bone_name, values, offset, diff_limit)
     return return_tuple[0], return_tuple[1]
 
 cdef tuple c_join_value_2_bezier(int fno, str bone_name, list values, double offset, double diff_limit):
     if len(values) <= 2:
-        # 次数が1の場合、線形補間
+        # 次数为1时，采用线性插值
         logger.debug("次数1: values: %s", values)
         return (LINEAR_MMD_INTERPOLATION, [])
     
@@ -153,17 +154,17 @@ cdef tuple c_join_value_2_bezier(int fno, str bone_name, list values, double off
     cdef int degree
 
     try:
-        # Xは次数（フレーム数）分移動
-        xs = np.arange(0, len(values), dtype=np.float)
-        # YはXの移動分を許容範囲とする
-        ys = np.array(values, dtype=np.float)
+        # X 按次数（帧数）的量移动
+        xs = np.arange(0, len(values), dtype=float)
+        # Y 以 X 的移动量作为容差范围
+        ys = np.array(values, dtype=float)
 
-        # カトマル曲線をベジェ曲線に変換する
+        # 将 Catmull-Rom 曲线转换为贝塞尔曲线
         (bz_x, bz_y) = convert_catmullrom_2_bezier(np.concatenate([[None], xs, [None]]), np.concatenate([[None], ys, [None]]))
         logger.debug("bz_x: %s, bz_y: %s", bz_x, bz_y)
 
         if len(bz_x) == 0:
-            # 始点と終点が指定されていて、カトマル曲線が描けなかった場合、線形補間
+            # 已指定起点与终点但无法绘制 Catmull-Rom 曲线时，采用线性插值
             logger.debug("カトマル曲線失敗: bz_x: %s", bz_x)
             return (LINEAR_MMD_INTERPOLATION, [])
 
@@ -171,26 +172,26 @@ cdef tuple c_join_value_2_bezier(int fno, str bone_name, list values, double off
         degree = int(len(bz_x) - 1)
         logger.test("degree: %s", degree)
 
-        # すべての制御点を加味したベジェ曲線
+        # 考虑所有控制点的贝塞尔曲线
         full_curve = bezier.Curve(np.asfortranarray([bz_x, bz_y]), degree=degree)
 
         if degree < 3:
-            # 3次未満の場合、3次まで次数を増やす
+            # 低于3次时，提升次数至3次
             joined_curve = full_curve.elevate()
             for _ in range(1, 3 - degree):
                 joined_curve = joined_curve.elevate()
         elif degree == 3:
-            # 3次の場合、そのままベジェ曲線をMMD用に補間
+            # 为3次时，直接将贝塞尔曲线插值为MMD用曲线
             joined_curve = full_curve
         else:
-            # 3次より多い場合、次数を減らす
+            # 高于3次时，降低次数
 
             reduced_curve_list = []
             bz_x = full_curve.nodes[0]
             bz_y = full_curve.nodes[1]
             logger.test("START bz_x: %s, bz_y: %s", bz_x, bz_y)
             
-            # 3次になるまでベジェ曲線を繋いで減らしていく
+            # 不断连接贝塞尔曲线并降次，直到变为3次
             while len(bz_x) > 4:
                 reduced_curve_list = []
 
@@ -200,13 +201,13 @@ cdef tuple c_join_value_2_bezier(int fno, str bone_name, list values, double off
                     logger.test("n: %s, reduce_bz_x: %s, reduce_bz_y: %s", n, reduce_bz_x, reduce_bz_y)
                     reduced_curve = bezier.Curve(np.asfortranarray([reduce_bz_x, reduce_bz_y]), degree=(len(reduce_bz_x) - 1))
 
-                    # 次数がある場合、減らす
+                    # 若存在次数，则减少
                     if (len(reduce_bz_x) - 1) > 1:
                         reduced_curve = reduced_curve.reduce_()
 
                     logger.test("n: %s, nodes: %s", n, reduced_curve.nodes)
                     
-                    # リストに追加
+                    # 添加到列表
                     reduced_curve_list.append(reduced_curve)
 
                 bz_x = np.empty(0)
@@ -227,27 +228,27 @@ cdef tuple c_join_value_2_bezier(int fno, str bone_name, list values, double off
 
         logger.test("joined_curve: %s", joined_curve.nodes)
 
-        # 全体のキーフレ
-        bezier_x = np.arange(0, len(values), dtype=np.float)[1:]
+        # 全部关键帧
+        bezier_x = np.arange(0, len(values), dtype=float)[1:]
 
-        # 元の2つのベジェ曲線との交点を取得する
+        # 求与原来两条贝塞尔曲线的交点
         full_ys = intersect_by_x(full_curve, bezier_x)
         logger.test("f: %s, %s, full_ys: %s", fno, bone_name, full_ys)
 
-        # 次数を減らしたベジェ曲線との交点を取得する
+        # 求与降次后贝塞尔曲线的交点
         reduced_ys = intersect_by_x(joined_curve, bezier_x)
         logger.test("f: %s, %s, reduced_ys: %s", fno, bone_name, reduced_ys)
 
-        # 交点の差を取得する(前後は必ず一致)
+        # 求交点的差值（首尾必然一致）
         diff_ys = np.concatenate([[0], np.array(full_ys) - np.array(reduced_ys)])
 
-        # 差が大きい箇所をピックアップする
-        diff_large = np.where(np.abs(diff_ys) > (diff_limit * (offset + 1)), 1, 0).astype(np.float)
+        # 挑出差异较大的位置
+        diff_large = np.where(np.abs(diff_ys) > (diff_limit * (offset + 1)), 1, 0).astype(float)
         
-        # 差が一定未満である場合、ベジェ曲線をMMD補間曲線に合わせる
+        # 若差值小于一定值，则将贝塞尔曲线对齐为MMD插值曲线
         nodes = joined_curve.nodes
 
-        # MMD用補間曲線に変換
+        # 转换为MMD用插值曲线
         joined_bz = scale_bezier(MVector2D(nodes[0, 0], nodes[1, 0]), MVector2D(nodes[0, 1], nodes[1, 1]), \
                                  MVector2D(nodes[0, 2], nodes[1, 2]), MVector2D(nodes[0, 3], nodes[1, 3]))
         logger.debug("f: %s, %s, values: %s, nodes: %s, full_ys: %s, reduced_ys: %s, diff_ys: %s, diff_limit: %s, diff_large: %s, joined_bz: %s, %s, fit: %s", \
@@ -255,31 +256,31 @@ cdef tuple c_join_value_2_bezier(int fno, str bone_name, list values, double off
                      is_fit_bezier_mmd(joined_bz, offset))
 
         if np.count_nonzero(diff_large) > 0:
-            # 差が大きい箇所がある場合、分割不可
+            # 若存在差异较大的位置，则无法分割
             return (None, np.where(diff_large)[0].tolist())
 
         if not is_fit_bezier_mmd(joined_bz, offset):
-            # 補間曲線がMMD補間曲線内に収まらない場合、NG
+            # 插值曲线无法收敛在MMD插值曲线范围内时为NG
 
-            # 差分の大きなところを返す
-            diff_large = np.where(np.abs(diff_ys) > (diff_limit * 0.5 * (offset + 1)), 1, 0).astype(np.float)            
+            # 返回差异较大的部分
+            diff_large = np.where(np.abs(diff_ys) > (diff_limit * 0.5 * (offset + 1)), 1, 0).astype(float)            
             if np.count_nonzero(diff_large) > 0:
                 return (None, np.where(diff_large)[0].tolist())
 
-            # 差分の大きなところを返す
-            diff_large = np.where(np.abs(diff_ys) > 0, 1, 0).astype(np.float)
+            # 返回差异较大的部分
+            diff_large = np.where(np.abs(diff_ys) > 0, 1, 0).astype(float)
             if np.count_nonzero(diff_large) > 0:
                 return (None, np.where(diff_large)[0].tolist())
 
             return (None, [])
         
-        # オフセット込みの場合、MMD用補間曲線枠内に収める
+        # 若含偏移，则收敛到MMD用插值曲线的范围内
         fit_bezier_mmd(joined_bz)
         
-        # すべてクリアした場合、補間曲線採用
+        # 若全部通过，则采用该插值曲线
         return (joined_bz, [])
     except Exception as e:
-        # エラーレベルは落として表に出さない
+        # 降低错误级别，不对外显示
         logger.debug("ベジェ曲線生成失敗", e)
         return (None, [])
 
@@ -293,7 +294,7 @@ cdef bint fit_bezier_mmd(list bzs):
     return True
 
 
-# Catmull-Rom曲線の制御点(通過点)をBezier曲線の制御点に変換する
+# 将 Catmull-Rom 曲线的控制点（经过点）转换为 Bezier 曲线的控制点
 # http://defghi1977-onblog.blogspot.com/2014/09/catmull-rombezier.html
 cdef tuple convert_catmullrom_2_bezier(np.ndarray xs, np.ndarray ys):
 
@@ -310,31 +311,31 @@ cdef tuple convert_catmullrom_2_bezier(np.ndarray xs, np.ndarray ys):
         C = None
 
         if not p0 and not p3:
-            # 両方ない場合、無視
+            # 两者都不存在时，忽略
             continue
 
         if not p0 and p3:
             bz_x.append(p1.x())
             bz_y.append(p1.y())
 
-            # p0が空の場合、始点
+            # p0为空时，作为起点
             B = (p1 * (1 / 2)) - p2 + (p3 * (1 / 2))
             C = (p1 * (-3 / 2)) + (p2 * 2) - (p3 * (1 / 2))
         
         if p0 and not p3:
-            # p3が空の場合、終点
+            # p3为空时，作为终点
             B = (p0 * (1 / 2)) - p1 + (p2 * (1 / 2))
             C = (p0 * (-1 / 2)) + (p2 * (1 / 2))
 
         if p0 and p3:
-            # それ以外は通過点
+            # 其他情况作为经过点
             B = p0 - (p1 * (5 / 2)) + (p2 * (4 / 2)) - (p3 * (1 / 2))
             C = (p0 * (-1 / 2)) + (p2 * (1 / 2))
         
         if not B or not C:
             logger.warning("p0: %s, p1: %s, p2: %s, p3: %s", p0, p1, p2, p3)
 
-        # ベジェ曲線の制御点
+        # 贝塞尔曲线的控制点
         s1 = (C + (p1 * 3)) / 3
         s2 = (B - (p1 * 3) + (s1 * 6)) / 3
         
@@ -350,7 +351,7 @@ cdef tuple convert_catmullrom_2_bezier(np.ndarray xs, np.ndarray ys):
     return (np.array(bz_x, dtype=np.float64), np.array(bz_y, dtype=np.float64))
 
 
-# 指定された複数のXと交わるそれぞれのYを返す
+# 返回与指定的多个X相交处各自的Y
 cdef np.ndarray intersect_by_x(curve, np.ndarray xs):
     cdef double x
     cdef list ys = []
@@ -358,29 +359,29 @@ cdef np.ndarray intersect_by_x(curve, np.ndarray xs):
     cdef np.ndarray[np.float_t, ndim=2] intersections
 
     for x in xs:
-        # 交点を求める為のX線上の直線
+        # 用于求交点的X轴上的直线
         line1 = bezier.Curve(np.asfortranarray([[x, x], [-99999, 99999]]), degree=1)
 
-        # 交点を求める（高精度は求めない）
+        # 求交点（不追求高精度）
         intersections = curve.intersect(line1, _verify=False)
 
-        # tからyを求め直す
+        # 由t重新求y
         s_vals = np.asfortranarray(intersections[0, :])
 
-        # 評価する
+        # 求值
         es = curve.evaluate_multi(s_vals)
         
-        # 値が取れている場合、その値を設定する
+        # 若能取到值，则设置该值
         if es.shape == (2, 1):
             ys.append(es[1][0])
-        # 取れていない場合、無視
+        # 取不到时，忽略
         else:
             ys.append(0)
     
-    return np.array(ys, dtype=np.float)
+    return np.array(ys, dtype=float)
 
 
-# 補間曲線を求める
+# 求插值曲线
 # http://d.hatena.ne.jp/edvakf/20111016/1318716097
 # https://pomax.github.io/bezierinfo
 # https://shspage.hatenadiary.org/entry/20140625/1403702735
@@ -425,14 +426,14 @@ cdef tuple c_evaluate(int x1v, int y1v, int x2v, int y2v, int start, int now, in
     return (x, y, t)
 
 
-# 指定されたtになるフレーム番号を取得する
+# 获取使t达到指定值的帧号
 def evaluate_by_t(x1v: int, y1v: int, x2v: int, y2v: int, start: int, end: int, t: float):
     return_tuple = c_evaluate_by_t(x1v, y1v, x2v, y2v, start, end, t)
     return return_tuple[0], return_tuple[1], return_tuple[2]
 
 cdef tuple c_evaluate_by_t(int x1v, int y1v, int x2v, int y2v, int start, int end, double t):
     if (end - start) <= 1:
-        # 差が1以内の場合、終了
+        # 差值在1以内时，结束
         return (start, 0, t)
     
     cdef double x1, x2, y1, y2
@@ -446,21 +447,21 @@ cdef tuple c_evaluate_by_t(int x1v, int y1v, int x2v, int y2v, int start, int en
     # 補間曲線
     curve1 = bezier.Curve(np.asfortranarray([[0, x1, x2, 1], [0, y1, y2, 1]]), degree=3)
 
-    # 単一の評価(x, y)
+    # 单一求值(x, y)
     es = curve1.evaluate(t)
 
-    # xに相当するフレーム番号
+    # x对应的帧号
     fno = int(round_integer(start + ((end - start) * es[0, 0])))
     
     return (fno, es[1, 0], t)
 
 
-# 3次ベジェ曲線の分割
+# 三次贝塞尔曲线的分割
 def split_bezier_mmd(x1v: int, y1v: int, x2v: int, y2v: int, start: int, now: int, end: int):
     if (now - start) == 0 or (end - start) == 0:
         return 0, 0, 0, False, False, LINEAR_MMD_INTERPOLATION, LINEAR_MMD_INTERPOLATION
 
-    # 3次ベジェ曲線を分割する
+    # 分割三次贝塞尔曲线
     return_tuple = split_bezier(x1v, y1v, x2v, y2v, start, now, end)
     x = return_tuple[0]
     y = return_tuple[1]
@@ -468,28 +469,28 @@ def split_bezier_mmd(x1v: int, y1v: int, x2v: int, y2v: int, start: int, now: in
     before_bz = return_tuple[3]
     after_bz = return_tuple[4]
 
-    # ベジェ曲線の値がMMD用に合っているかを加味して返す
+    # 结合贝塞尔曲线的值是否符合MMD用途后返回
     return x, y, t, is_fit_bezier_mmd(before_bz), is_fit_bezier_mmd(after_bz), before_bz, after_bz
 
 
-# ベジェ曲線の値がMMD用に合っているか
+# 贝塞尔曲线的值是否符合MMD用途
 def is_fit_bezier_mmd(bz: list, offset=0):
     for b in bz:
         if not (0 - offset <= b.x() <= INTERPOLATION_MMD_MAX + offset) or not (0 - offset <= b.y() <= INTERPOLATION_MMD_MAX + offset):
-            # MMD用の範囲内でなければNG
+            # 不在MMD用途范围内则为NG
             return False
 
     if bz[1].x() == bz[1].y() == bz[2].x() == bz[2].y() == 0:
-        # 全部0なら不整合
+        # 全部为0则视为不一致
         return False
 
     return True
 
 
-# 3次ベジェ曲線の分割
+# 三次贝塞尔曲线的分割
 # http://geom.web.fc2.com/geometry/bezier/cut-cb.html
 cdef tuple split_bezier(int x1v, int y1v, int x2v, int y2v, int start, int now, int end):
-    # 補間曲線の進んだ時間分を求める
+    # 求插值曲线推进的时间量
     return_tuple = c_evaluate(x1v, y1v, x2v, y2v, start, now, end)
     cdef double x = return_tuple[0]
     cdef double y = return_tuple[1]
@@ -507,16 +508,16 @@ cdef tuple split_bezier(int x1v, int y1v, int x2v, int y2v, int start, int now, 
     cdef MVector2D I = F * (1 - t) + G * t # noqa
     cdef MVector2D J = H * (1 - t) + I * t
 
-    # 新たな4つのベジェ曲線の制御点は、A側がAEHJ、C側がJIGDとなる。
+    # 新的4个贝塞尔曲线控制点为：A侧为AEHJ，C侧为JIGD。
 
-    # スケーリング
+    # 缩放
     cdef list beforeBz = scale_bezier(A, E, H, J)
     cdef list afterBz = scale_bezier(J, I, G, D)
 
     return (x, y, t, beforeBz, afterBz)
 
 
-# 分割したベジェのスケーリング
+# 对分割后的贝塞尔曲线进行缩放
 cdef list scale_bezier(MVector2D p1, MVector2D p2, MVector2D p3, MVector2D p4):
     cdef MVector2D diff = p4 - p1
 
@@ -534,7 +535,7 @@ cdef list scale_bezier(MVector2D p1, MVector2D p2, MVector2D p3, MVector2D p4):
     return [bs1, bs2, bs3, bs4]
 
 
-# nan対策を加味したベジェ曲線の点算出
+# 计算考虑nan对策的贝塞尔曲线点
 cdef MVector2D scale_bezier_point(MVector2D pn, MVector2D p1, MVector2D diff):
     cdef MVector2D s = (pn - p1) / diff
 
@@ -542,17 +543,17 @@ cdef MVector2D scale_bezier_point(MVector2D pn, MVector2D p1, MVector2D diff):
     # logger.test("(pn-p1): %s", (pn-p1))
     # logger.test("s: %s", s)
 
-    # nanになったら0決め打ち
+    # 若变为nan则直接取0
     s.effective()
 
     return s
 
 
-# ベジェ曲線をMMD用の数値に丸める
+# 将贝塞尔曲线取整为MMD用的数值
 cdef MVector2D round_bezier_mmd(MVector2D target):
     cdef MVector2D t2 = MVector2D()
 
-    # XとYをそれぞれ整数(0-127)に丸める
+    # 将X与Y分别取整为整数(0-127)
     t2.setX(round_integer(target.x() * INTERPOLATION_MMD_MAX))
     t2.setY(round_integer(target.y() * INTERPOLATION_MMD_MAX))
 
@@ -560,8 +561,8 @@ cdef MVector2D round_bezier_mmd(MVector2D target):
 
 
 cdef int round_integer(double t):
-    # 一旦整数部にまで持ち上げる
+    # 先提升到整数部分
     cdef double t2 = t * 1000000
     
-    # pythonは偶数丸めなので、整数部で丸めた後、元に戻す
+    # python采用偶数舍入，因此在整数部分舍入后再还原
     return round(round(t2, -6) / 1000000)

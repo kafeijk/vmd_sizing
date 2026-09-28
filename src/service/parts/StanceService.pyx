@@ -60,7 +60,7 @@ cdef class StanceService():
         with ThreadPoolExecutor(thread_name_prefix="stance", max_workers=min(5, self.options.max_workers)) as executor:
             for data_set_idx, data_set in enumerate(self.options.data_set_list):
                 if data_set.motion.motion_cnt <= 0:
-                    # モーションデータが無い場合、処理スキップ
+                    # 没有动作数据时，跳过处理
                     continue
 
                 futures.append(executor.submit(self.execute_pool, self, data_set_idx))
@@ -81,26 +81,26 @@ cdef class StanceService():
             logger.copy(self.options)
             data_set = self.options.data_set_list[data_set_idx]
 
-            # スタンス追加補正をする場合
+            # 执行站姿追加修正的情况
             if data_set.detail_stance_flg:
                 if "センターXZ補正" in data_set.selected_stance_details:
-                    # センターXZ補正
+                    # センターXZ修正
                     result = result and self.adjust_center_stance(data_set_idx, data_set)
 
                 if result and "上半身補正" in data_set.selected_stance_details:
-                    # 上半身補正
+                    # 上半身修正
                     result = result and self.adjust_upper_stance(data_set_idx, data_set)
 
                 if result and "下半身補正" in data_set.selected_stance_details:
-                    # 下半身補正
+                    # 下半身修正
                     result = result and self.adjust_lower_stance(data_set_idx, data_set)
 
                 if result and "足ＩＫ補正" in data_set.selected_stance_details:
-                    # 足ＩＫ補正
+                    # 足ＩＫ修正
                     result = result and self.adjust_leg_ik_stance(data_set_idx, data_set)
 
                 if result and "つま先補正" in data_set.selected_stance_details:
-                    # つま先補正
+                    # つま先修正
                     result = result and self.adjust_toe_stance(data_set_idx, data_set)
 
                 if result and "つま先ＩＫ補正" in data_set.selected_stance_details:
@@ -138,22 +138,22 @@ cdef class StanceService():
                     
                     target_model_type = target_model_type + "変換先"
 
-                logger.warning("No.%sの%sモデルの腕構造にサイジングが対応していない為、腕系処理をスキップします。", (data_set_idx + 1), target_model_type, decoration=MLogger.DECORATION_BOX)
+                logger.warning("No.%s的%s模型的手臂结构不支持适配，因此跳过手臂相关处理。", (data_set_idx + 1), target_model_type, decoration=MLogger.DECORATION_BOX)
 
             return True
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # 捩り分散
     cdef bint spread_twist(self, int data_set_idx, data_set):
-        logger.info("捩り分散　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("扭转分散　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         # for direction in ["左", "右"]:
         #     self.spread_twist_lr(data_set_idx, direction)
@@ -243,7 +243,7 @@ cdef class StanceService():
                 logger.test("%s: axis: %s", wrist_bone_name, wrist_local_x_axis)
 
                 # 内積差分に基づきキー追加
-                logger.info("%s捩り分散準備開始【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s扭转分散准备开始【No.%s】", direction, (data_set_idx + 1))
                 fnos = data_set.motion.get_differ_fnos((data_set_idx + 1), [arm_bone_name, arm_twist_bone_name, elbow_bone_name, wrist_twist_bone_name, wrist_bone_name], \
                                                        limit_degrees=70, limit_length=0)
                 
@@ -270,10 +270,10 @@ cdef class StanceService():
                     if not f.result():
                         return PROCESS_ERROR
 
-                logger.info("-- %s捩り分散準備:終了【No.%s】", direction, (data_set_idx + 1))
+                logger.info("-- %s扭转分散准备:完成【No.%s】", direction, (data_set_idx + 1))
 
-                logger.info("%s捩り分散準備:終了【No.%s】", direction, (data_set_idx + 1))
-                logger.info("%s捩り分散開始【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s扭转分散准备:完成【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s扭转分散开始【No.%s】", direction, (data_set_idx + 1))
 
                 # 腕系ボーンのfnos
                 fnos = data_set.motion.get_bone_fnos(arm_bone_name, arm_twist_bone_name, elbow_bone_name, wrist_twist_bone_name, wrist_bone_name)
@@ -300,7 +300,7 @@ cdef class StanceService():
                     if not f.result():
                         return PROCESS_ERROR
                 
-                logger.info("%s捩り分散後処理 - 分散中間チェック①【No.%s】", arm_bone_name, (data_set_idx + 1))
+                logger.info("%s扭转分散后处理 - 分散中间检查①【No.%s】", arm_bone_name, (data_set_idx + 1))
 
                 check_fnos = []
                 futures = []
@@ -428,21 +428,21 @@ cdef class StanceService():
                 #     if f.result() == PROCESS_ERROR:
                 #         return False
 
-                logger.info("%s捩り分散:終了【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s扭转分散:完成【No.%s】", direction, (data_set_idx + 1))
                 return PROCESS_FINISH
 
             else:
-                logger.info("%s捩り分散: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", direction, (data_set_idx + 1), ", ".join(twist_target_bones))
+                logger.info("%s扭转分散: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", direction, (data_set_idx + 1), ", ".join(twist_target_bones))
 
             return PROCESS_SKIP
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
     
     cdef bint remove_unnecessary_bf_pool_parts(self, int data_set_idx, str bone_name, int offset):
@@ -458,11 +458,11 @@ cdef class StanceService():
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     cdef bint regist_twist_bf(self, int data_set_idx, str bone_name, list fnos, str parent_bone_name):
@@ -483,10 +483,10 @@ cdef class StanceService():
                 data_set.motion.regist_bf(bf, bone_name, fno)
 
                 if fno // 2000 > prev_sep_fno:
-                    logger.count("【No.{0} - キーフレ追加 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
+                    logger.count("【No.{0} - 添加关键帧 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
                     prev_sep_fno = fno // 2000
 
-            logger.count("【No.{0} - キーフレ追加 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
+            logger.count("【No.{0} - 添加关键帧 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
 
             if is_target_copy:
                 prev_sep_fno = 0
@@ -500,20 +500,20 @@ cdef class StanceService():
                         data_set.motion.regist_bf(bf, bone_name, fno, copy_interpolation=True)
 
                     if fno // 2000 > prev_sep_fno:
-                        logger.count("【No.{0} - 補間曲線設定 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
+                        logger.count("【No.{0} - 设置插值曲线 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
                         prev_sep_fno = fno // 2000
 
-                logger.count("【No.{0} - 補間曲線設定 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
+                logger.count("【No.{0} - 设置插值曲线 - {1}】".format(data_set_idx + 1, bone_name), fno, fnos)
 
             return True
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
         
     cdef bint smooth_twist(self, int data_set_idx, str bone_name):
@@ -530,11 +530,11 @@ cdef class StanceService():
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
         
     cdef bint smooth_filter_twist(self, int data_set_idx, str bone_name, dict config):
@@ -551,11 +551,11 @@ cdef class StanceService():
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # 分散後のフリップチェック        
@@ -665,17 +665,17 @@ cdef class StanceService():
                 logger.debug("○中間一致 f: %s, %s, twist_test_dot: %s, twist_test_x_dot: %s, twist_test_y_dot: %s", fno, arm_twist_bone_name, twist_test_dot, twist_test_x_dot, twist_test_y_dot)
 
             if fno in log_target_idxs:
-                logger.count("【No.{0} - 中間捩り分散{1} - {2}】".format(data_set_idx + 1, count, arm_twist_bone_name), fno, None, last_fno=last_fno)
+                logger.count("【No.{0} - 中间扭转分散{1} - {2}】".format(data_set_idx + 1, count, arm_twist_bone_name), fno, None, last_fno=last_fno)
 
             return True
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # 捩り分散のPool内処理
@@ -776,17 +776,17 @@ cdef class StanceService():
             data_set.motion.bones[wrist_bone_name][fno] = wrist_bf
 
             if fno in log_target_idxs and last_fno > 0:
-                logger.count("【No.{0} - 捩り分散 - {1}】".format(data_set_idx + 1, arm_twist_bone_name), fno, None, last_fno=last_fno)
+                logger.count("【No.{0} - 扭转分散 - {1}】".format(data_set_idx + 1, arm_twist_bone_name), fno, None, last_fno=last_fno)
 
             return True
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # 腕～腕捩り～ひじを求める        
@@ -1126,7 +1126,7 @@ cdef class StanceService():
         arm_twist_result_qq = MQuaternion.fromAxisAndAngle(arm_twist_local_x_axis, arm_twist_result_degree)
 
         if arm_twist_result_dot < 0.9:
-            logger.warning("【No.%s】%sフレーム目:%s 捩り分散失敗: 角度: %s 近似度: %s", (data_set_idx + 1), fno, arm_twist_bone_name, round(arm_twist_result_degree, 3), round(arm_twist_result_dot, 5))
+            logger.warning("【No.%s】第%s帧:%s 扭转分散失败: 角度: %s 近似度: %s", (data_set_idx + 1), fno, arm_twist_bone_name, round(arm_twist_result_degree, 3), round(arm_twist_result_dot, 5))
 
         logger.debug("f: %s, %s: %s, arm_result_qq: %s(%s)", fno, arm_bone_name, arm_result_dot, arm_result_qq.toDegree(), arm_result_qq)
         logger.debug("f: %s, %s: %s, arm_twist_result_qq: %s(%s)", fno, arm_twist_bone_name, arm_twist_result_dot, arm_twist_result_degree, arm_twist_result_qq)
@@ -1430,7 +1430,7 @@ cdef class StanceService():
         wrist_twist_result_qq = MQuaternion.fromAxisAndAngle(wrist_twist_local_x_axis, wrist_twist_result_degree)
 
         if wrist_twist_result_dot < 0.9:
-            logger.warning("【No.%s】%sフレーム目:%s 捩り分散失敗: 角度: %s 近似度: %s", (data_set_idx + 1), fno, wrist_twist_bone_name, round(wrist_twist_result_degree, 3), round(wrist_twist_result_dot, 5))
+            logger.warning("【No.%s】第%s帧:%s 扭转分散失败: 角度: %s 近似度: %s", (data_set_idx + 1), fno, wrist_twist_bone_name, round(wrist_twist_result_degree, 3), round(wrist_twist_result_dot, 5))
 
         logger.debug("f: %s, %s: %s, wrist_twist_result_qq: %s(%s)", fno, wrist_twist_bone_name, wrist_twist_result_dot, wrist_twist_result_degree, wrist_twist_result_qq)
         logger.debug("f: %s, %s: %s, wrist_result_qq: %s(%s)", fno, wrist_bone_name, wrist_result_dot, wrist_result_qq.toDegree(), wrist_result_qq)
@@ -1439,7 +1439,7 @@ cdef class StanceService():
 
     # 足ＩＫ補正
     cdef bint adjust_leg_ik_stance(self, int data_set_idx, MOptionsDataSet data_set):
-        logger.info("足ＩＫ補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("腿ＩＫ修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
         
         total_cnt = 0
         process_cnt = 0
@@ -1492,7 +1492,7 @@ cdef class StanceService():
 
                 # 足IK親がモーションにあって、かつモデルにない場合、元の位置がおかしいのでスキップ
                 if data_set.motion.is_active_bones("{0}足IK親".format(direction)) and ("{0}足IK親".format(direction) not in data_set.org_model.bones or "{0}足IK親".format(direction) not in data_set.rep_model.bones):
-                    logger.info("%s足ＩＫ補正: 【No.%s】%s足IK親が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", direction, (data_set_idx + 1), direction)
+                    logger.info("%s腿ＩＫ修正: 【No.%s】%s足IK親在源模型或目标模型中不存在，因此跳过处理。", direction, (data_set_idx + 1), direction)
                     return PROCESS_SKIP
 
                 # 足ＩＫのそれぞれでフレーム番号をチェックする
@@ -1504,7 +1504,7 @@ cdef class StanceService():
                         "{0}足".format(direction) == data_set.rep_model.bone_indexes[data_set.rep_model.bones[target_bone_name].ik.link[-1].bone_index]:
 
                     # ボーンとモーションが揃ってある場合のみ補正
-                    logger.info("%s補正【No.%s】", target_bone_name, (data_set_idx + 1))
+                    logger.info("%s修正【No.%s】", target_bone_name, (data_set_idx + 1))
 
                     org_ik_root_bone_name = data_set.org_model.bone_indexes[data_set.org_model.bones[target_bone_name].ik.link[-1].bone_index]
                     rep_ik_root_bone_name = data_set.rep_model.bone_indexes[data_set.rep_model.bones[target_bone_name].ik.link[-1].bone_index]
@@ -1528,7 +1528,7 @@ cdef class StanceService():
                     fnos = data_set.motion.get_bone_fnos(target_bone_name)
 
                     if len(fnos) == 0:
-                        logger.info("%s足ＩＫ補正: 【No.%s】処理対象キーフレがないため、処理を終了します。", direction, (data_set_idx + 1))
+                        logger.info("%s腿ＩＫ修正: 【No.%s】没有处理对象关键帧，结束处理。", direction, (data_set_idx + 1))
                         return True
 
                     ik_on_fnos = []
@@ -1567,12 +1567,12 @@ cdef class StanceService():
                     for fno_idx, fno in enumerate(fnos):
                         if fno not in ik_on_fnos:
                             # IK=ONのキーフレではない場合、処理スルー
-                            logger.warning("【No.%s】%sフレーム目:%s IKフラグ=OFFの為、処理スキップします", (data_set_idx + 1), fno, target_bone_name)
+                            logger.warning("【No.%s】第%s帧:%s 因IK标志为OFF，跳过处理", (data_set_idx + 1), fno, target_bone_name)
                             continue
                             
                         if fno in d_on_fnos:
                             # D系ボーンに値が入ってるキーフレである場合、処理スルー
-                            logger.warning("【No.%s】%sフレーム目:%s 足DもしくはひざDに値が入っている為、処理スキップします", (data_set_idx + 1), fno, target_bone_name)
+                            logger.warning("【No.%s】第%s帧:%s 因足D或ひざD已存在数值，跳过处理", (data_set_idx + 1), fno, target_bone_name)
                             continue
                             
                         # 足ＩＫのbf
@@ -1638,7 +1638,7 @@ cdef class StanceService():
                         rep_leg_ik_recalc_local_pos = rep_leg_ik_matrix.inverted() * recalc_rep_global_leg_ik_pos
                         rep_leg_ik_recalc_local_pos.setY(ik_bf.position.y())
 
-                        logger.debug("f: %s, %s, 先IKローカル(計算前): %s, 先IKローカル(計算後): %s, 変更後IK: %s", fno, target_bone_name, \
+                        logger.debug("f: %s, %s, 目标IK局部(计算前): %s, 目标IK局部(计算后): %s, 变更后IK: %s", fno, target_bone_name, \
                                      rep_local_leg_ik_pos.to_log(), rep_leg_ik_recalc_local_pos.to_log(), ik_bf.position.to_log())
 
                         # 計算後IKのローカル位置を加算
@@ -1656,22 +1656,22 @@ cdef class StanceService():
                 else:
                     logger.info("%s足ＩＫ補正: 【No.%s】作成元もしくは変換先の%s足ＩＫのＩＫルートボーンが、「%s足」ボーンではないため、処理をスキップします。", direction, (data_set_idx + 1), direction, direction)
             else:
-                logger.info("%s足ＩＫ補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", direction, (data_set_idx + 1), ", ".join(leg_ik_target_bones))
+                logger.info("%s腿ＩＫ修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", direction, (data_set_idx + 1), ", ".join(leg_ik_target_bones))
 
             return PROCESS_SKIP
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # つま先ＩＫ補正
     cdef bint adjust_toe_ik_stance(self, int data_set_idx, MOptionsDataSet data_set):
-        logger.info("つま先ＩＫ補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("脚尖ＩＫ修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         total_cnt = 0
         process_cnt = 0
@@ -1733,10 +1733,10 @@ cdef class StanceService():
 
                     if not data_set.motion.is_active_bones(toe_ik_bone_name):
                         # 0Fキーはあっても無視
-                        logger.info("%sつま先ＩＫ補正: 【No.%s】処理対象キーフレがないため、処理を終了します。", direction, (data_set_idx + 1))
+                        logger.info("%s脚尖ＩＫ修正: 【No.%s】没有处理对象关键帧，结束处理。", direction, (data_set_idx + 1))
                         return PROCESS_SKIP
 
-                    logger.info("%s補正【No.%s】", toe_ik_bone_name, (data_set_idx + 1))
+                    logger.info("%s修正【No.%s】", toe_ik_bone_name, (data_set_idx + 1))
 
                     org_toe_ik_links = data_set.org_model.create_link_2_top_one(toe_ik_bone_name)
                     org_leg_links = data_set.org_model.create_link_2_top_one(leg_bone_name)
@@ -1748,7 +1748,7 @@ cdef class StanceService():
                     fnos = sorted(list(set(fnos)))
 
                     if len(fnos) <= 1:
-                        logger.info("%sつま先ＩＫ補正: 【No.%s】処理対象キーフレがないため、処理を終了します。", direction, (data_set_idx + 1))
+                        logger.info("%s脚尖ＩＫ修正: 【No.%s】没有处理对象关键帧，结束处理。", direction, (data_set_idx + 1))
                         return PROCESS_SKIP
 
                     ik_on_fnos = []
@@ -1792,12 +1792,12 @@ cdef class StanceService():
                     for fno_idx, fno in enumerate(fnos):
                         if fno not in ik_on_fnos:
                             # IK=ONのキーフレではない場合、処理スルー
-                            logger.warning("【No.%s】%sフレーム目:%s IKフラグ=OFFの為、処理スキップします", (data_set_idx + 1), fno, toe_ik_bone_name)
+                            logger.warning("【No.%s】第%s帧:%s 因IK标志为OFF，跳过处理", (data_set_idx + 1), fno, toe_ik_bone_name)
                             continue
                             
                         if fno in d_on_fnos:
                             # D系ボーンに値が入ってるキーフレである場合、処理スルー
-                            logger.warning("【No.%s】%sフレーム目:%s 足DもしくはひざDに値が入っている為、処理スキップします", (data_set_idx + 1), fno, toe_ik_bone_name)
+                            logger.warning("【No.%s】第%s帧:%s 因足D或ひざD已存在数值，跳过处理", (data_set_idx + 1), fno, toe_ik_bone_name)
                             continue
 
                         # つま先ＩＫのbf
@@ -1876,25 +1876,25 @@ cdef class StanceService():
                 #     self.remove_unnecessary_bf_pool_parts(data_set_idx, leg_ik_bone_name, 0)
                 #     self.remove_unnecessary_bf_pool_parts(data_set_idx, toe_ik_bone_name, 0)
 
-                logger.info("%sつま先ＩＫ補正:終了【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s脚尖ＩＫ修正:完成【No.%s】", direction, (data_set_idx + 1))
                 return PROCESS_FINISH
             else:
-                logger.info("%sつま先ＩＫ補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", direction, (data_set_idx + 1), ", ".join(toe_ik_target_bones))
+                logger.info("%s脚尖ＩＫ修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", direction, (data_set_idx + 1), ", ".join(toe_ik_target_bones))
 
             return PROCESS_SKIP
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # つま先補正
     cdef bint adjust_toe_stance(self, int data_set_idx, MOptionsDataSet data_set):
-        logger.info("つま先補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("脚尖修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         total_cnt = 0
         process_cnt = 0
@@ -1941,7 +1941,7 @@ cdef class StanceService():
 
             # 足IK親がモーションにあって、かつモデルにない場合、元の位置がおかしいのでスキップ
             if data_set.motion.is_active_bones("{0}足IK親".format(direction)) and ("{0}足IK親".format(direction) not in data_set.org_model.bones or "{0}足IK親".format(direction) not in data_set.rep_model.bones):
-                logger.info("%sつま先補正: 【No.%s】%s足IK親が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", direction, (data_set_idx + 1), direction)
+                logger.info("%s脚尖修正: 【No.%s】%s足IK親在源模型或目标模型中不存在，因此跳过处理。", direction, (data_set_idx + 1), direction)
                 return PROCESS_SKIP
 
             if set(toe_target_bones).issubset(data_set.org_model.bones) and set(toe_target_bones).issubset(data_set.rep_model.bones):
@@ -1949,13 +1949,13 @@ cdef class StanceService():
                 rep_toe_links = data_set.rep_model.create_link_2_top_one("{0}つま先実体".format(direction))
 
                 if direction == "左":
-                    logger.debug("元：左つま先：%s", data_set.org_model.left_toe_vertex)
-                    logger.debug("先：左つま先：%s", data_set.rep_model.left_toe_vertex)
+                    logger.debug("源：左脚尖：%s", data_set.org_model.left_toe_vertex)
+                    logger.debug("目标：左脚尖：%s", data_set.rep_model.left_toe_vertex)
                     logger.debug("元：左足底：%s", data_set.org_model.left_sole_vertex)
                     logger.debug("先：左足底：%s", data_set.rep_model.left_sole_vertex)
                 else:
-                    logger.debug("元：右つま先：%s", data_set.org_model.right_toe_vertex)
-                    logger.debug("先：右つま先：%s", data_set.rep_model.right_toe_vertex)
+                    logger.debug("源：右脚尖：%s", data_set.org_model.right_toe_vertex)
+                    logger.debug("目标：右脚尖：%s", data_set.rep_model.right_toe_vertex)
                     logger.debug("元：右足底：%s", data_set.org_model.right_sole_vertex)
                     logger.debug("先：右足底：%s", data_set.rep_model.right_sole_vertex)
 
@@ -1964,7 +1964,7 @@ cdef class StanceService():
 
                 toe_limit_ratio = rep_toe_limit / org_toe_limit
 
-                logger.info("%sつま先補正【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s脚尖修正【No.%s】", direction, (data_set_idx + 1))
             
                 prev_sep_fno = 0
                 # 足ＩＫと足IK親の両方でフレーム番号をチェックする
@@ -1998,7 +1998,7 @@ cdef class StanceService():
                         # 足ＩＫを動かして、つま先の位置を合わせる
                         adjust_toe_y = ik_bf.position.y() + (org_toe_diff - rep_toe_diff)
                         ik_bf.position.setY(adjust_toe_y)
-                        logger.debug("f: %s, %sつま先床補正: つま先合わせ つま先実体: %s, 足底実体: %s, 足IK: %s", ik_bf.fno, direction, rep_toe_pos.y(), rep_sole_pos.y(), adjust_toe_y)
+                        logger.debug("f: %s, %s脚尖地面修正: 脚尖对齐 脚尖实体: %s, 足底实体: %s, 腿IK: %s", ik_bf.fno, direction, rep_toe_pos.y(), rep_sole_pos.y(), adjust_toe_y)
                         # 登録対象
                         data_set.motion.regist_bf(ik_bf, "{0}足ＩＫ".format(direction), fno)
                     elif rep_sole_pos.y() < rep_toe_pos.y() and org_sole_pos.y() < org_toe_limit:
@@ -2009,7 +2009,7 @@ cdef class StanceService():
                         # 足ＩＫを動かして、足底の位置を合わせる
                         adjust_sole_y = ik_bf.position.y() + (org_sole_diff - rep_sole_diff)
                         ik_bf.position.setY(adjust_sole_y)
-                        logger.debug("f: %s, %s足底床補正: 足底合わせ 足底実体: %s, 足底実体: %s, 足IK: %s", ik_bf.fno, direction, rep_sole_pos.y(), rep_sole_pos.y(), adjust_sole_y)
+                        logger.debug("f: %s, %s足底地面修正: 足底对齐 足底实体: %s, 足底实体: %s, 腿IK: %s", ik_bf.fno, direction, rep_sole_pos.y(), rep_sole_pos.y(), adjust_sole_y)
                         # 登録対象
                         data_set.motion.regist_bf(ik_bf, "{0}足ＩＫ".format(direction), fno)
                     else:
@@ -2017,23 +2017,23 @@ cdef class StanceService():
                         pass
                 
                     if fno // 500 > prev_sep_fno:
-                        logger.count("【No.{0} - {1}つま先補正】".format(data_set_idx + 1, direction), fno, fnos)
+                        logger.count("【No.{0} - {1}脚尖修正】".format(data_set_idx + 1, direction), fno, fnos)
                         prev_sep_fno = fno // 500
 
-                logger.info("%sつま先補正:終了【No.%s】", direction, (data_set_idx + 1))
+                logger.info("%s脚尖修正:完成【No.%s】", direction, (data_set_idx + 1))
                 return PROCESS_FINISH
             else:
-                logger.info("%sつま先補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", direction, (data_set_idx + 1), ", ".join(toe_target_bones))
+                logger.info("%s脚尖修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", direction, (data_set_idx + 1), ", ".join(toe_target_bones))
 
             return PROCESS_SKIP
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # つま先実体のグローバル位置を取得する
@@ -2061,7 +2061,7 @@ cdef class StanceService():
         cdef int fno, prev_sep_fno
         cdef VmdBoneFrame bf
 
-        logger.info("センターXZ補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("中心XZ修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         # センター調整に必要なボーン群
         center_target_bones = ["センター", "上半身", "下半身", "左足ＩＫ", "右足ＩＫ", "左足", "右足"]
@@ -2088,29 +2088,29 @@ cdef class StanceService():
             # 準備（細分化）
             self.prepare_split_stance(data_set_idx, data_set, "センター")
 
-            logger.info("センターXZ補正: 準備終了【No.%s】", (data_set_idx + 1))
+            logger.info("中心XZ修正: 准备完成【No.%s】", (data_set_idx + 1))
 
             prev_fno = 0
             fnos = data_set.motion.get_bone_fnos("センター")
             for fno in fnos:
                 bf = data_set.motion.bones["センター"][fno]
                 if bf.key:
-                    logger.debug("f: %s, 調整前: %s", bf.fno, bf.position)
+                    logger.debug("f: %s, 调整前: %s", bf.fno, bf.position)
                     bf.position += self.calc_center_offset_by_leg_ik(bf, data_set_idx, data_set, \
                                                                      org_center_links, org_leg_ik_links, rep_center_links, rep_leg_ik_links, \
                                                                      org_center_bone_name, rep_center_bone_name)
-                    logger.debug("f: %s, 足IKオフセット後: %s", bf.fno, bf.position)
+                    logger.debug("f: %s, 腿IK偏移后: %s", bf.fno, bf.position)
                     bf.position += self.calc_center_offset_by_trunk(bf, data_set_idx, data_set, \
                                                                     org_center_links, org_upper_links, org_lower_links, org_leg_links, \
                                                                     rep_center_links, rep_upper_links, rep_lower_links, rep_leg_links, \
                                                                     org_center_bone_name, rep_center_bone_name)
-                    logger.debug("f: %s, 体幹オフセット後: %s", bf.fno, bf.position)
+                    logger.debug("f: %s, 躯干偏移后: %s", bf.fno, bf.position)
 
                 if fno // 500 > prev_fno:
-                    logger.count("【No.{0} - センターXZ補正】".format(data_set_idx + 1), fno, fnos)
+                    logger.count("【No.{0} - 中心XZ修正】".format(data_set_idx + 1), fno, fnos)
                     prev_fno = fno // 500
 
-            logger.info("センターXZ補正: 終了【No.%s】", (data_set_idx + 1))
+            logger.info("中心XZ修正: 完成【No.%s】", (data_set_idx + 1))
 
             if self.options.now_process_ctrl:
                 self.options.now_process += 1
@@ -2120,7 +2120,7 @@ cdef class StanceService():
                 self.options.tree_process_dict[proccess_key]["スタンス追加補正"]["センターXZ補正"] = True
 
         else:
-            logger.info("センターXZ補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", (data_set_idx + 1), ", ".join(center_target_bones))
+            logger.info("中心XZ修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", (data_set_idx + 1), ", ".join(center_target_bones))
                         
         return True
 
@@ -2138,7 +2138,7 @@ cdef class StanceService():
         cdef VmdBoneFrame center_bf, groove_bf, bf
         cdef bint is_org_left_wrist_offset, is_org_right_wrist_offset, is_org_left_leg_offset, is_org_right_leg_offset
         
-        logger.info("センターY補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("中心Y修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         # センター調整に必要なボーン群（腕チェック済み）
         center_target_bones = ["センター", "左手首", "右手首", "左足", "右足"]
@@ -2182,7 +2182,7 @@ cdef class StanceService():
             # 準備（細分化）
             self.prepare_split_stance(data_set_idx, data_set, "センター")
 
-            logger.info("センターY補正: 準備終了【No.%s】", (data_set_idx + 1))
+            logger.info("中心Y修正: 准备完成【No.%s】", (data_set_idx + 1))
 
             org_upper_length = (data_set.org_model.bones["首根元"].position.distanceToPoint(data_set.org_model.bones["上半身"].position))
             rep_upper_length = (data_set.rep_model.bones["首根元"].position.distanceToPoint(data_set.rep_model.bones["上半身"].position))
@@ -2204,14 +2204,14 @@ cdef class StanceService():
                 target_bf = heights_bf[np.argmax(heights)]
 
                 if bf.position.y() < 0:
-                    logger.debug("f: %s, 調整前: %s", target_bf.fno, target_bf.position)
+                    logger.debug("f: %s, 调整前: %s", target_bf.fno, target_bf.position)
                     height_offset_vec, is_org_left_wrist_offset, is_org_right_wrist_offset, is_org_left_leg_offset, is_org_right_leg_offset \
                         = self.calc_center_offset_by_arm(bf, data_set_idx, data_set, org_center_links, org_arm_links, org_leg_links, \
                                                          rep_center_links, rep_arm_links, rep_leg_links, org_palm_length, rep_palm_length, \
                                                          org_center_bone_name, rep_center_bone_name, org_upper_length, rep_upper_length)
                     target_bf.position += height_offset_vec
 
-                    logger.debug("f: %s, 腕オフセット後: %s", target_bf.fno, target_bf.position)
+                    logger.debug("f: %s, 手臂偏移后: %s", target_bf.fno, target_bf.position)
                     data_set.motion.regist_bf(target_bf, target_bf.name, fno)
 
                     # マイナス補正の場合、足も調整する
@@ -2224,10 +2224,10 @@ cdef class StanceService():
                         data_set.motion.regist_bf(right_leg_ik_bf, right_leg_ik_bf.name, fno)
 
                 if fno // 500 > prev_fno and fnos[-1] > 0:
-                    logger.count("【No.{0} - センターY補正】".format(data_set_idx + 1), fno, fnos)
+                    logger.count("【No.{0} - 中心Y修正】".format(data_set_idx + 1), fno, fnos)
                     prev_fno = fno // 500
                 
-            logger.info("センターY補正: 終了【No.%s】", (data_set_idx + 1))
+            logger.info("中心Y修正: 完成【No.%s】", (data_set_idx + 1))
 
             if self.options.now_process_ctrl:
                 self.options.now_process += 1
@@ -2237,7 +2237,7 @@ cdef class StanceService():
                 self.options.tree_process_dict[proccess_key]["スタンス追加補正"]["センターY補正"] = True
 
         else:
-            logger.info("センターY補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", (data_set_idx + 1), ", ".join(center_target_bones))
+            logger.info("中心Y修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", (data_set_idx + 1), ", ".join(center_target_bones))
 
         return True
 
@@ -2272,10 +2272,10 @@ cdef class StanceService():
             # if rep_left_wrist_pos.y() > org_left_wrist_pos.y():
             #     # 床上の場合、とりあえず半分だけ
             #     org_left_wrist_offset /= 2
-            logger.debug("○センターY補正（左手首） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
+            logger.debug("○中心Y修正（左手腕） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
                          org_left_wrist_offset, (org_left_wrist_pos.y()), rep_left_wrist_pos.y())
         else:
-            logger.debug("×センターY補正なし（左手首） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
+            logger.debug("×无中心Y修正（左手腕） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
 
         org_right_wrist_offset = 0
         is_org_right_wrist_offset = org_right_wrist_pos.y() < org_palm_length * 1.5
@@ -2285,10 +2285,10 @@ cdef class StanceService():
             # if rep_right_wrist_pos.y() > org_right_wrist_pos.y():
             #     # 床上の場合、とりあえず半分だけ
             #     org_right_wrist_offset /= 2
-            logger.debug("○センターY補正（右手首） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
+            logger.debug("○中心Y修正（右手腕） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
                          org_right_wrist_offset, (org_right_wrist_pos.y()), rep_right_wrist_pos.y())
         else:
-            logger.debug("×センターY補正なし（右手首） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
+            logger.debug("×无中心Y修正（右手腕） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
         
         org_left_leg_offset = 0
         is_org_left_leg_offset = org_left_leg_pos.y() < org_palm_length * 1.5
@@ -2298,10 +2298,10 @@ cdef class StanceService():
             # if rep_left_leg_pos.y() > org_left_leg_pos.y():
             #     # 床上の場合、とりあえず半分だけ
             #     org_left_leg_offset /= 2
-            logger.debug("○センターY補正（左足） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
+            logger.debug("○中心Y修正（左腿） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
                          org_left_leg_offset, (org_left_leg_pos.y()), rep_left_leg_pos.y())
         else:
-            logger.debug("×センターY補正なし（左足） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
+            logger.debug("×无中心Y修正（左腿） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
 
         org_right_leg_offset = 0
         is_org_right_leg_offset = org_right_leg_pos.y() < org_palm_length * 1.5
@@ -2311,10 +2311,10 @@ cdef class StanceService():
             # if rep_right_leg_pos.y() > org_right_leg_pos.y():
             #     # 床上の場合、とりあえず半分だけ
             #     org_right_leg_offset /= 2
-            logger.debug("○センターY補正（右足） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
+            logger.debug("○中心Y修正（右腿） f: %s, y: %s, org: %s, rep: %s", bf.fno, \
                          org_right_leg_offset, (org_right_leg_pos.y()), rep_right_leg_pos.y())
         else:
-            logger.debug("×センターY補正なし（右足） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
+            logger.debug("×无中心Y修正（右腿） f: %s, org: %s", bf.fno, org_left_wrist_pos.y())
         
         rep_center_arm_offset = MVector3D()
         target_offsets = np.array([org_left_wrist_offset, org_right_wrist_offset])
@@ -2324,7 +2324,7 @@ cdef class StanceService():
             # rep_center_arm_offset = MVector3D(0, target_offsets[np.argmin(np.abs(target_offsets[np.nonzero(target_offsets)[int(0)]]))], 0)
             rep_center_arm_offset = MVector3D(0, target_offsets[np.argmin(np.abs(target_offsets))], 0)
 
-        logger.debug("センターY補正（結果） f: %s, y: %s", bf.fno, rep_center_arm_offset.y())
+        logger.debug("中心Y修正（结果） f: %s, y: %s", bf.fno, rep_center_arm_offset.y())
 
         return rep_center_arm_offset, is_org_left_wrist_offset, is_org_right_wrist_offset, is_org_left_leg_offset, is_org_right_leg_offset
 
@@ -2523,7 +2523,7 @@ cdef class StanceService():
         cdef MVector3D arm_diff_ratio, org_arm_diff, org_to_diff, rep_arm_diff, ratio, rep_to_diff, to_diff_ratio
         cdef MQuaternion rep_upper2_initial_slope_qq, rep_upper_initial_slope_qq, upper2_initial_qq, upper_initial_qq
 
-        logger.info("上半身補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("上半身修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         # 上半身調整に必要なボーン群
         upper_target_bones = ["上半身", "頭", "首", "左腕", "右腕"]
@@ -2598,7 +2598,7 @@ cdef class StanceService():
             # 内積
             dot = MVector3D.dotProduct(org_upper_slope.normalized(), rep_upper_slope.normalized())
 
-            logger.info("【No.%s】上半身 - 向きの近似度: %s", (data_set_idx + 1), round(dot, 5))
+            logger.info("【No.%s】上半身 - 朝向近似度: %s", (data_set_idx + 1), round(dot, 5))
 
             if dot >= 0.8:
                 upper_initial_qq = initial_bf.rotation
@@ -2615,7 +2615,7 @@ cdef class StanceService():
             # 準備（細分化）
             self.prepare_split_stance(data_set_idx, data_set, "上半身")
 
-            logger.info("上半身補正: 準備終了【No.%s】", (data_set_idx + 1))
+            logger.info("上半身修正: 准备完成【No.%s】", (data_set_idx + 1))
 
             prev_fno = 0
             fnos = data_set.motion.get_bone_fnos("上半身")
@@ -2632,7 +2632,7 @@ cdef class StanceService():
                 data_set.motion.regist_bf(upper_bf, "上半身", fno)
                     
                 if fno // 500 > prev_fno:
-                    logger.count("【No.{0} - 上半身補正】".format(data_set_idx + 1), fno, fnos)
+                    logger.count("【No.{0} - 上半身修正】".format(data_set_idx + 1), fno, fnos)
                     prev_fno = fno // 500
 
             # 子の角度調整
@@ -2640,7 +2640,7 @@ cdef class StanceService():
             self.adjust_rotation_by_parent(data_set_idx, data_set, "左腕", "上半身")
             self.adjust_rotation_by_parent(data_set_idx, data_set, "右腕", "上半身")
 
-            logger.info("上半身補正: 終了【No.%s】", (data_set_idx + 1))
+            logger.info("上半身修正: 完成【No.%s】", (data_set_idx + 1))
 
             if is_upper2_existed:
                 # 上半身2がある場合
@@ -2689,7 +2689,7 @@ cdef class StanceService():
 
                 # 内積
                 dot = MVector3D.dotProduct(org_upper2_slope.normalized(), rep_upper2_slope.normalized())
-                logger.info("【No.%s】上半身2 - 向きの近似度: %s", (data_set_idx + 1), round(dot, 5))
+                logger.info("【No.%s】上半身2 - 朝向近似度: %s", (data_set_idx + 1), round(dot, 5))
 
                 if dot >= 0.8:
                     upper2_initial_qq = initial_bf.rotation
@@ -2706,7 +2706,7 @@ cdef class StanceService():
                 # 準備（細分化）
                 self.prepare_split_stance(data_set_idx, data_set, "上半身2")
 
-                logger.info("上半身2補正: 準備終了【No.%s】", (data_set_idx + 1))
+                logger.info("上半身2修正: 准备完成【No.%s】", (data_set_idx + 1))
 
                 prev_fno = 0
                 fnos = data_set.motion.get_bone_fnos("上半身2")
@@ -2722,7 +2722,7 @@ cdef class StanceService():
                     data_set.motion.regist_bf(upper2_bf, "上半身2", fno)
 
                     if fno // 500 > prev_fno:
-                        logger.count("【No.{0} - 上半身2補正】".format(data_set_idx + 1), fno, fnos)
+                        logger.count("【No.{0} - 上半身2修正】".format(data_set_idx + 1), fno, fnos)
                         prev_fno = fno // 500
 
                 # 子の角度調整
@@ -2730,7 +2730,7 @@ cdef class StanceService():
                 self.adjust_rotation_by_parent(data_set_idx, data_set, "左腕", "上半身2")
                 self.adjust_rotation_by_parent(data_set_idx, data_set, "右腕", "上半身2")
 
-                logger.info("上半身2補正: 終了【No.%s】", (data_set_idx + 1))
+                logger.info("上半身2修正: 完成【No.%s】", (data_set_idx + 1))
 
             if self.options.now_process_ctrl:
                 self.options.now_process += 1
@@ -2740,7 +2740,7 @@ cdef class StanceService():
                 self.options.tree_process_dict[proccess_key]["スタンス追加補正"]["上半身補正"] = True
 
         else:
-            logger.info("上半身補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", (data_set_idx + 1), ", ".join(upper_target_bones))
+            logger.info("上半身修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", (data_set_idx + 1), ", ".join(upper_target_bones))
 
         return True
 
@@ -2757,7 +2757,7 @@ cdef class StanceService():
         cdef MVector3D org_lower_slope, rep_lower_slope, rep_lower_slope_cross, rep_lower_slope_up
         cdef MVector3D leg_diff_ratio, org_leg_diff, org_to_diff, ratio, rep_leg_diff, rep_to_diff, to_diff_ratio
 
-        logger.info("下半身補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("下半身修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         # 下半身調整に必要なボーン群
         lower_target_bones = ["下半身", "足中間", "左足", "右足"]
@@ -2824,7 +2824,7 @@ cdef class StanceService():
 
             # 内積
             dot = MVector3D.dotProduct(org_lower_slope.normalized(), rep_lower_slope.normalized())
-            logger.info("【No.%s】下半身 - 向きの近似度: %s", (data_set_idx + 1), round(dot, 5))
+            logger.info("【No.%s】下半身 - 朝向近似度: %s", (data_set_idx + 1), round(dot, 5))
 
             if dot >= 0.8:
                 lower_initial_qq = initial_bf.rotation
@@ -2841,7 +2841,7 @@ cdef class StanceService():
             # 準備（細分化）
             self.prepare_split_stance(data_set_idx, data_set, "下半身")
 
-            logger.info("下半身補正: 準備終了【No.%s】", (data_set_idx + 1))
+            logger.info("下半身修正: 准备完成【No.%s】", (data_set_idx + 1))
 
             prev_fno = 0
             fnos = data_set.motion.get_bone_fnos("下半身")
@@ -2857,14 +2857,14 @@ cdef class StanceService():
                 data_set.motion.regist_bf(lower_bf, "下半身", fno)
 
                 if fno // 500 > prev_fno:
-                    logger.count("【No.{0} - 下半身補正】".format(data_set_idx + 1), fno, fnos)
+                    logger.count("【No.{0} - 下半身修正】".format(data_set_idx + 1), fno, fnos)
                     prev_fno = fno // 500
 
             # 子の角度調整
             self.adjust_rotation_by_parent_ik(data_set_idx, data_set, "左足", "下半身", "左足ＩＫ")
             self.adjust_rotation_by_parent_ik(data_set_idx, data_set, "右足", "下半身", "右足ＩＫ")
 
-            logger.info("下半身補正: 終了【No.%s】", (data_set_idx + 1))
+            logger.info("下半身修正: 完成【No.%s】", (data_set_idx + 1))
 
             if self.options.now_process_ctrl:
                 self.options.now_process += 1
@@ -2873,7 +2873,7 @@ cdef class StanceService():
                 proccess_key = "【No.{0}】{1}({2})".format(data_set_idx + 1, os.path.basename(data_set.motion.path), data_set.rep_model.name)
                 self.options.tree_process_dict[proccess_key]["スタンス追加補正"]["下半身補正"] = True
         else:
-            logger.info("下半身補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", (data_set_idx + 1), ", ".join(lower_target_bones))
+            logger.info("下半身修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", (data_set_idx + 1), ", ".join(lower_target_bones))
 
         return True
 
@@ -2979,10 +2979,10 @@ cdef class StanceService():
         logger.test("f: %s, initial: %s", bf.fno, initial.toEulerAngles())
         logger.test("f: %s, orientation: %s", bf.fno, from_orientation.toEulerAngles())
 
-        logger.debug("f: %s, 補正回転: %s", bf.fno, from_rotation.toEulerAngles4MMD())
+        logger.debug("f: %s, 修正旋转: %s", bf.fno, from_rotation.toEulerAngles4MMD())
 
         org_bf = data_set.org_motion.calc_bf(from_bone_name, bf.fno)
-        logger.debug("f: %s, 元の回転: %s", bf.fno, org_bf.rotation.toEulerAngles4MMD())
+        logger.debug("f: %s, 原始旋转: %s", bf.fno, org_bf.rotation.toEulerAngles4MMD())
 
         if org_bf:
             # 元にもあるキーである場合、内積チェック
@@ -2990,7 +2990,7 @@ cdef class StanceService():
             logger.test("f: %s, 近似度: %s", bf.fno, uad)
             if uad < dot_limit:
                 # 内積が離れすぎてたらNG
-                logger.warning("【No.%s】%sフレーム目:%sスタンス補正失敗: 角度:%s, 近似度: %s", \
+                logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
                                (data_set_idx + 1), bf.fno, from_bone_name, from_rotation.toEulerAngles4MMD().to_log(), round(uad, 5))
             else:
                 # 内積の差が小さい場合、回転適用
@@ -3003,7 +3003,7 @@ cdef class StanceService():
 
     # 肩補正
     cdef bint adjust_shoulder_stance(self, int data_set_idx, MOptionsDataSet data_set):
-        logger.info("肩補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("肩部修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
 
         total_cnt = 0
         process_cnt = 0
@@ -3114,7 +3114,7 @@ cdef class StanceService():
                 # 子として肩の角度調整
                 self.adjust_rotation_by_parent(data_set_idx, data_set, shoulder_name, shoulder_p_name)
 
-                logger.info("%sスタンス補正: 準備終了【No.%s】", shoulder_name, (data_set_idx + 1))
+                logger.info("%s站姿修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
                 prev_fno = 0
                 # 肩P、肩、腕の全てのキーフレリスト
@@ -3176,7 +3176,7 @@ cdef class StanceService():
                     new_shoulder_qq = MQuaternion.rotationTo(rep_global_arm_pos - rep_global_shoulder_pos, recalc_rep_global_arm_pos - rep_global_shoulder_pos)
                     
                     org_bf = data_set.org_motion.calc_bf(shoulder_name, bf.fno)
-                    logger.debug("f: %s, %s, 補正回転: %s, 元の回転: %s", bf.fno, bf.name, new_shoulder_qq.toEulerAngles4MMD().to_log(), bf.rotation.toEulerAngles4MMD().to_log())
+                    logger.debug("f: %s, %s, 修正旋转: %s, 原始旋转: %s", bf.fno, bf.name, new_shoulder_qq.toEulerAngles4MMD().to_log(), bf.rotation.toEulerAngles4MMD().to_log())
 
                     if org_bf:
                         # 元にもあるキーである場合、内積チェック
@@ -3184,7 +3184,7 @@ cdef class StanceService():
                         logger.debug("f: %s, uad: %s, org: %s, result: %s", bf.fno, uad, org_bf.rotation.toEulerAngles4MMD(), new_shoulder_qq.toEulerAngles4MMD())
                         if uad < min(0.6, ratio):
                             # 内積が離れすぎてたらNG
-                            logger.warning("【No.%s】%sフレーム目:%sスタンス補正失敗: 角度:%s, 近似度: %s", \
+                            logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
                                         (data_set_idx + 1), bf.fno, shoulder_name, new_shoulder_qq.toEulerAngles4MMD().to_log(), round(uad, 5))
                             bf.rotation = org_bf.rotation
                         else:
@@ -3198,27 +3198,27 @@ cdef class StanceService():
                     data_set.motion.regist_bf(bf, shoulder_name, bf.fno)
                         
                     if fno // 500 > prev_fno:
-                        logger.count("【No.{0} - {1}スタンス補正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
+                        logger.count("【No.{0} - {1}站姿修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
                         prev_fno = fno // 500
 
                 # 子の角度調整
                 self.adjust_rotation_by_parent(data_set_idx, data_set, arm_name, shoulder_name)
 
-                logger.info("%sスタンス補正: 終了【No.%s】", shoulder_name, (data_set_idx + 1))
+                logger.info("%s站姿修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
                 return PROCESS_FINISH
             else:
-                logger.info("%s補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", shoulder_name, (data_set_idx + 1), ", ".join(shoulder_target_bones))
+                logger.info("%s修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", shoulder_name, (data_set_idx + 1), ", ".join(shoulder_target_bones))
             
             return PROCESS_SKIP
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
     
     # 肩補正左右
@@ -3248,7 +3248,7 @@ cdef class StanceService():
 
                 # 内積
                 dot = MVector3D.dotProduct(org_shoulder_slope.normalized(), rep_shoulder_slope.normalized())
-                logger.info("【No.%s】%s - 向きの近似度: %s", (data_set_idx + 1), shoulder_name, round(dot, 5))
+                logger.info("【No.%s】%s - 朝向近似度: %s", (data_set_idx + 1), shoulder_name, round(dot, 5))
 
                 org_shoulder_diff = (data_set.org_model.bones[arm_name].position - data_set.org_model.bones[shoulder_name].position)
                 org_shoulder_diff.one()
@@ -3262,7 +3262,7 @@ cdef class StanceService():
 
                 logger.debug("%s, org_shoulder_diff: %s, rep_shoulder_diff: %s", shoulder_name, org_shoulder_diff.to_log(), rep_shoulder_diff.to_log())
 
-                logger.info("【No.%s】%s - 長さ比率: %s", (data_set_idx + 1), shoulder_name, shoulder_diff_ratio.to_log())
+                logger.info("【No.%s】%s - 长度比例: %s", (data_set_idx + 1), shoulder_name, shoulder_diff_ratio.to_log())
 
                 if dot >= 0.82:
                     self.adjust_shoulder_stance_near(data_set_idx, shoulder_p_name, shoulder_name, arm_name, 0.9, is_shoulder_p)
@@ -3270,22 +3270,22 @@ cdef class StanceService():
                     # 肩の傾きが遠い場合
                     self.adjust_shoulder_stance_far(data_set_idx, shoulder_p_name, shoulder_name, arm_name, 0.4, is_shoulder_p)
                 else:
-                    logger.warning("%sの初期スタンスの角度が大きく違うため、肩補正の結果がおかしくなる可能性があります【No.%s】", shoulder_name, (data_set_idx + 1))
+                    logger.warning("%s的初始站姿角度差异较大，肩部修正的结果可能出现异常【No.%s】", shoulder_name, (data_set_idx + 1))
                     self.adjust_shoulder_stance_far(data_set_idx, shoulder_p_name, shoulder_name, arm_name, 0, is_shoulder_p)
                 
                 return PROCESS_FINISH
             else:
-                logger.info("%s補正: 【No.%s】[%s]のボーン群が、作成元もしくは変換先のいずれかで足りないため、処理をスキップします。", shoulder_name, (data_set_idx + 1), ", ".join(shoulder_target_bones))
+                logger.info("%s修正: 【No.%s】[%s]的骨骼群在源模型或目标模型中不完整，因此跳过处理。", shoulder_name, (data_set_idx + 1), ", ".join(shoulder_target_bones))
             
             return PROCESS_SKIP
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
     
     # 肩の傾きが離れている場合のスタンス補正
@@ -3346,7 +3346,7 @@ cdef class StanceService():
         # 子として肩の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, shoulder_name, shoulder_p_name)
 
-        logger.info("%sスタンス補正: 準備終了【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s站姿修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         prev_fno = 0
         # 肩P、肩、腕の全てのキーフレリスト
@@ -3408,7 +3408,7 @@ cdef class StanceService():
             new_shoulder_qq = MQuaternion.rotationTo(rep_global_arm_pos - rep_global_shoulder_pos, recalc_rep_global_arm_pos - rep_global_shoulder_pos)
             
             org_bf = data_set.org_motion.calc_bf(shoulder_name, bf.fno)
-            logger.debug("f: %s, %s, 補正回転: %s, 元の回転: %s", bf.fno, bf.name, new_shoulder_qq.toEulerAngles4MMD().to_log(), bf.rotation.toEulerAngles4MMD().to_log())
+            logger.debug("f: %s, %s, 修正旋转: %s, 原始旋转: %s", bf.fno, bf.name, new_shoulder_qq.toEulerAngles4MMD().to_log(), bf.rotation.toEulerAngles4MMD().to_log())
 
             if org_bf:
                 # 元にもあるキーである場合、内積チェック
@@ -3416,7 +3416,7 @@ cdef class StanceService():
                 logger.test("f: %s, uad: %s, org: %s, result: %s", bf.fno, uad, org_bf.rotation.toEulerAngles4MMD(), new_shoulder_qq.toEulerAngles4MMD())
                 if uad < dot_limit:
                     # 内積が離れすぎてたらNG
-                    logger.warning("【No.%s】%sフレーム目:%sスタンス補正失敗: 角度:%s, 近似度: %s", \
+                    logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
                                    (data_set_idx + 1), bf.fno, shoulder_name, new_shoulder_qq.toEulerAngles4MMD().to_log(), round(uad, 5))
                     bf.rotation = org_bf.rotation
                 else:
@@ -3430,13 +3430,13 @@ cdef class StanceService():
             data_set.motion.regist_bf(bf, shoulder_name, bf.fno)
                 
             if fno // 500 > prev_fno:
-                logger.count("【No.{0} - {1}スタンス補正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
+                logger.count("【No.{0} - {1}站姿修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
                 prev_fno = fno // 500
 
         # 子の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, arm_name, shoulder_name)
 
-        logger.info("%sスタンス補正: 終了【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s站姿修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         return True
 
@@ -3533,7 +3533,7 @@ cdef class StanceService():
         # 子として肩の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, shoulder_name, shoulder_p_name)
 
-        logger.info("%sスタンス補正: 準備終了【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s站姿修正: 准备完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         prev_fno = 0
         # 肩P、肩、腕の全てのキーフレリスト
@@ -3551,13 +3551,13 @@ cdef class StanceService():
             data_set.motion.regist_bf(shoulder_bf, shoulder_name, fno)
                 
             if fno // 500 > prev_fno:
-                logger.count("【No.{0} - {1}スタンス補正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
+                logger.count("【No.{0} - {1}站姿修正】".format(data_set_idx + 1, shoulder_name), fno, fnos)
                 prev_fno = fno // 500
 
         # 子の角度調整
         self.adjust_rotation_by_parent(data_set_idx, data_set, arm_name, shoulder_name)
 
-        logger.info("%sスタンス補正: 終了【No.%s】", shoulder_name, (data_set_idx + 1))
+        logger.info("%s站姿修正: 完成【No.%s】", shoulder_name, (data_set_idx + 1))
 
         return True
 
@@ -3659,10 +3659,10 @@ cdef class StanceService():
         logger.test("f: %s, initial: %s", bf.fno, initial.toEulerAngles())
         logger.test("f: %s, orientation: %s", bf.fno, from_orientation.toEulerAngles())
 
-        logger.debug("f: %s, 補正回転: %s", bf.fno, from_rotation.toEulerAngles4MMD())
+        logger.debug("f: %s, 修正旋转: %s", bf.fno, from_rotation.toEulerAngles4MMD())
 
         org_bf = data_set.org_motion.calc_bf(from_bone_name, bf.fno)
-        logger.debug("f: %s, 元の回転: %s", bf.fno, org_bf.rotation.toEulerAngles4MMD())
+        logger.debug("f: %s, 原始旋转: %s", bf.fno, org_bf.rotation.toEulerAngles4MMD())
 
         if org_bf:
             # 元にもあるキーである場合、内積チェック
@@ -3670,7 +3670,7 @@ cdef class StanceService():
             logger.test("f: %s, uad: %s, org: %s, result: %s", bf.fno, uad, org_bf.rotation.toEulerAngles4MMD(), from_rotation.toEulerAngles4MMD())
             if uad < dot_limit:
                 # 内積が離れすぎてたらNG
-                logger.warning("【No.%s】%sフレーム目:%sスタンス補正失敗: 角度:%s, 近似度: %s", \
+                logger.warning("【No.%s】第%s帧:%s站姿修正失败: 角度:%s, 近似度: %s", \
                                (data_set_idx + 1), bf.fno, from_bone_name, from_rotation.toEulerAngles4MMD().to_log(), round(uad, 5))
             else:
                 # 内積の差が小さい場合、回転適用
@@ -3790,7 +3790,7 @@ cdef class StanceService():
     cdef bint adjust_arm_stance(self, int data_set_idx, MOptionsDataSet data_set):
         cdef dict arm_diff_qq_dic
 
-        logger.info("腕スタンス補正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
+        logger.info("手臂站姿修正　【No.%s】", (data_set_idx + 1), decoration=MLogger.DECORATION_LINE)
         
         # 腕のスタンス差
         arm_diff_qq_dic = self.calc_arm_stance(data_set, data_set_idx)
@@ -3842,17 +3842,17 @@ cdef class StanceService():
 
                         bf.rotation = rep_qq
                 
-                logger.info("腕スタンス補正【No.%s - %s】", (data_set_idx + 1), bone_name)
+                logger.info("手臂站姿修正【No.%s - %s】", (data_set_idx + 1), bone_name)
 
             return True
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
     # 腕スタンス補正左右
@@ -3873,7 +3873,7 @@ cdef class StanceService():
                         else:
                             bf.rotation = arm_diff_qq_dic[bone_name]["from"].inverted() * bf.rotation * arm_diff_qq_dic[bone_name]["to"]
                 
-                logger.info("腕スタンス補正【No.%s - %s】", (data_set_idx + 1), bone_name)
+                logger.info("手臂站姿修正【No.%s - %s】", (data_set_idx + 1), bone_name)
                 logger.test("from: %s", arm_diff_qq_dic[bone_name]["from"].toEulerAngles())
                 logger.test("to: %s", arm_diff_qq_dic[bone_name]["to"].toEulerAngles())
 
@@ -3881,11 +3881,11 @@ cdef class StanceService():
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
         
     # 腕スタンス補正用傾き計算
@@ -3942,10 +3942,10 @@ cdef class StanceService():
                             # ISAO式ミクの場合、手首と中指が分断されてるので、表示先をベースに調整する
                             if direction == "左":
                                 if org_wrist2finger1 > org_finget12finger3 * 2:
-                                    logger.warning(f"作成元モデルの、手首から中指付け根までの長さ({round(org_wrist2finger1, 4)})が中指の長さx2の長さ({round(org_finget12finger3 * 2, 4)})より長いため、手首の表示先で傾きを調整します。【No.{(data_set_idx + 1)}】")
+                                    logger.warning(f"源模型中，从手腕到中指根部的长度({round(org_wrist2finger1, 4)})比中指长度x2的长度({round(org_finget12finger3 * 2, 4)})更长，因此将在手腕的显示目标处调整倾斜。【No.{(data_set_idx + 1)}】")
 
                                 if rep_wrist2finger1 > rep_finget12finger3 * 2:
-                                    logger.warning(f"変換先モデルの、手首から中指付け根までの長さ({round(rep_wrist2finger1, 4)})が中指の長さx2の長さ({round(rep_finget12finger3 * 2, 4)})より長いため、手首の表示先で傾きを調整します。【No.{(data_set_idx + 1)}】")
+                                    logger.warning(f"目标模型中，从手腕到中指根部的长度({round(rep_wrist2finger1, 4)})比中指长度x2的长度({round(rep_finget12finger3 * 2, 4)})更长，因此将在手腕的显示目标处调整倾斜。【No.{(data_set_idx + 1)}】")
 
                             # TARGET-TOの傾き
                             _, org_to_qq = data_set.org_model.calc_arm_stance(target_bone_name, None)

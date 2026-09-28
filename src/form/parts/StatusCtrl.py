@@ -22,6 +22,6 @@ class StatusCtrl(wx.TextCtrl):
     #     while True:
     #         # super().write(queue.get())
     #         wx.CallAfter(queue.get())
-    #         # 0.1秒待機
+    #         # 等待0.1秒
     #         time.sleep(0.1)
 

@@ -32,11 +32,11 @@ from utils.MException import SizingException, MKilledException
 
 logger = MLogger(__name__, level=1)
 
-# 床処理用INDEX
+# 床处理用INDEX
 cdef int FLOOR_IDX = -1
 
 
-# 位置合わせ用オプション
+# 位置对齐用选项
 cdef class ArmAlignmentOption:
     cdef public BoneLinks org_links
     cdef public BoneLinks rep_links
@@ -74,19 +74,19 @@ cdef class ArmAlignmentOption:
         self.priority = priority
 
         if "床" in start_bone_name:
-            # 元と先の比率（床の場合、XZ比率で身体の大きさだけ検討する）
+            # 源与目标的比率（地板情况下，仅用XZ比率考虑身体大小）
             self.ratio = xz_ratio
         else:
-            # エフェクタまでの長さ比率
+            # 到末端效应器的长度比率
             org_effector_diff = (org_model.bones[effector_bone_name].position - org_model.bones[start_bone_name].position)
             org_effector_diff.one()
             rep_effector_diff = (rep_model.bones[effector_bone_name].position - rep_model.bones[start_bone_name].position)
             rep_effector_diff.one()
             effector_diff_ratio = rep_effector_diff.length() / org_effector_diff.length()
 
-            # 元と先の比率
+            # 源与目标的比率
             self.ratio = effector_diff_ratio
-        # 元と先の比率（複数モーション時）
+        # 源与目标的比率（多个动作时）
         self.multi_ratio = xz_ratio
 
 
@@ -99,50 +99,50 @@ cdef class ArmAlignmentService:
         self.options = options
 
     def execute(self):
-        # 腕処理対象データセットを取得
+        # 获取手臂处理对象数据集
         self.target_data_set_idxs = self.get_target_set_idxs()
         logger.test("target_data_set_idxs: %s", self.target_data_set_idxs)
 
         if len(self.target_data_set_idxs) == 0:
-            # データセットがない場合、処理スキップ
-            logger.warning("位置合わせができるファイルセットが見つからなかったため、位置合わせ処理をスキップします。", decoration=MLogger.DECORATION_BOX)
+            # 没有数据集时，跳过处理
+            logger.warning("未找到可进行位置对齐的文件集，因此跳过位置对齐处理。", decoration=MLogger.DECORATION_BOX)
             return True
 
-        # リンク辞書
+        # 链接字典
         self.target_links = {}
-        # 処理対象ボーン名リスト
+        # 处理对象骨骼名列表
         bone_names = ["センター", "グルーブ"]
 
-        logger.info("位置合わせ　", decoration=MLogger.DECORATION_LINE)
+        logger.info("位置对齐　", decoration=MLogger.DECORATION_LINE)
 
         try:
             for data_set_idx in self.target_data_set_idxs:
-                # 処理対象データセットに対して、準備実行
+                # 对处理对象数据集执行准备
 
-                # 手首位置合わせ用準備（床位置合わせも含む）
+                # 手腕位置对齐准备（也包含地板位置对齐）
                 bone_names.extend(self.prepare_wrist(data_set_idx))
 
                 if self.options.arm_options.alignment_finger_flg:
-                    # 指位置合わせ用準備
+                    # 手指位置对齐准备
                     bone_names.extend(self.prepare_finger(data_set_idx))
 
-            # ボーン名重複除去
+            # 骨骼名去重
             bone_names = list(set(bone_names))
 
             fnos = []
-            # 処理対象全ファイルセット単位でキーフレ検出
+            # 以所有处理对象文件集为单位检测关键帧
             for data_set_idx in self.target_data_set_idxs:
-                # 処理対象データセット
+                # 处理对象数据集
                 data_set = self.options.data_set_list[data_set_idx]
                 fnos.extend(data_set.motion.get_bone_fnos(*bone_names))
 
-            # キーフレを重複除外してソートする
+            # 关键帧去重后排序
             fnos = sorted(list(set(fnos)))
 
-            # 位置合わせ準備
+            # 位置对齐准备
             all_alignment_group_list, all_messages = self.prepare_alignment(fnos)
 
-            # 位置合わせ実行
+            # 位置对齐执行
             self.execute_alignment(fnos, all_alignment_group_list, all_messages, bone_names)
             
             if self.options.now_process_ctrl:
@@ -155,14 +155,14 @@ cdef class ArmAlignmentService:
         except MKilledException as ke:
             raise ke
         except SizingException as se:
-            logger.error("サイジング処理が処理できないデータで終了しました。\n\n%s", se.message)
+            logger.error("适配处理因无法处理的数据而结束。\n\n%s", se.message)
             return se
         except Exception as e:
             import traceback
-            logger.error("サイジング処理が意図せぬエラーで終了しました。\n\n%s", traceback.format_exc())
+            logger.error("适配处理因意外错误而结束。\n\n%s", traceback.format_exc())
             raise e
 
-    # 位置合わせ準備
+    # 位置对齐准备
     cdef prepare_alignment(self, list fnos):           
         cdef int from_data_set_idx, to_data_set_idx, alignment_idx, data_set_idx, fidx, from_alignment_idx
         cdef int group_idx, to_alignment_idx, fno, priority, prev_block_fno
@@ -205,20 +205,20 @@ cdef class ArmAlignmentService:
             all_org_global_tip_vec[fno] = {}
             all_org_global_effector_matrixs[fno] = {}
 
-            # 処理対象キーフレを先頭からひとつずつチェックしていく
+            # 从开头逐个检查处理对象关键帧
             for data_set_idx, alignment_options in self.target_links.items():
                 for alignment_idx, target_link in alignment_options.items():
-                    # 処理対象データセット
+                    # 处理对象数据集
                     data_set = self.options.data_set_list[data_set_idx]
 
-                    # 元モデルのそれぞれのグローバル位置
+                    # 源模型各自的全局位置
                     org_global_3ds, org_global_matrixs = \
                         MServiceUtils.c_calc_global_pos(data_set.org_model, target_link.org_links, data_set.org_motion, fno, return_matrix=True, is_local_x=True, limit_links=None)
                    
                     all_org_global_effector_vec[fno][(data_set_idx, alignment_idx)] = org_global_3ds[target_link.effector_bone_name]
 
                     if alignment_idx < 0:
-                        # 床の位置は各位置のY0をvectorの場合のみ定義し直す（距離を測る用）
+                        # 地板位置仅在vector情况下将各位置的Y0重新定义（用于测量距离）
                         all_org_global_effector_vec[fno][(data_set_idx, alignment_idx)].setY(0)
 
                     all_org_global_trunk_matrixs[fno][(data_set_idx, alignment_idx)] = org_global_matrixs["首根元"]
@@ -226,15 +226,15 @@ cdef class ArmAlignmentService:
                     all_org_global_upper_vec[fno][(data_set_idx, alignment_idx)] = org_global_3ds["上半身"]
 
                     if target_link.tip_ik_links:
-                        # 指先合わせが必要な場合、保持
+                        # 需要对齐指尖时，保持
                         all_org_global_tip_vec[fno][(data_set_idx, alignment_idx)] = org_global_3ds[target_link.tip_bone_name]
                         all_org_global_effector_matrixs[fno][(data_set_idx, alignment_idx)] = org_global_matrixs[target_link.effector_bone_name]
 
             if fno // 200 > prev_block_fno:
-                logger.count("位置合わせ準備①", fno, fnos)
+                logger.count("位置对齐准备①", fno, fnos)
                 prev_block_fno = fno // 200
 
-        logger.count("位置合わせ準備①", fno, fnos)
+        logger.count("位置对齐准备①", fno, fnos)
                     
         all_messages = {}
         all_is_alignment = {}
@@ -243,7 +243,7 @@ cdef class ArmAlignmentService:
 
         for data_set_idx, alignment_options in self.target_links.items():
             for alignment_idx, target_link in alignment_options.items():
-                # indexを保持
+                # 保持index
                 all_is_alignment[(data_set_idx, alignment_idx)] = {}
                 all_alignment_idx[(data_set_idx, alignment_idx)] = -1
 
@@ -252,47 +252,47 @@ cdef class ArmAlignmentService:
             all_messages[fno] = []
             all_distances[fno] = {}
             
-            # それぞれの距離を算出
-            # 起点となるボーン
+            # 计算各自的距离
+            # 作为起点的骨骼
             for ((from_data_set_idx, from_alignment_idx), (to_data_set_idx, to_alignment_idx)) in org_effector_pairs:
                 org_from_global_effector_vec = all_org_global_effector_vec[fno][(from_data_set_idx, from_alignment_idx)]
                 org_to_global_effector_vec = all_org_global_effector_vec[fno][(to_data_set_idx, to_alignment_idx)]
 
-                # 処理対象
+                # 处理对象
                 from_target_link = self.target_links[from_data_set_idx][from_alignment_idx]
                 to_target_link = self.target_links[to_data_set_idx][to_alignment_idx]
                 
-                # 同じINDEX、同じ方向で同じ計算対象
+                # 相同INDEX、相同方向且为相同的计算对象
                 if (from_data_set_idx, from_target_link.start_bone_name[0]) == (to_data_set_idx, to_target_link.start_bone_name[0]) or \
                         (from_data_set_idx, from_alignment_idx, to_data_set_idx, to_alignment_idx) in distances or \
                         (to_data_set_idx, to_alignment_idx, from_data_set_idx, from_alignment_idx) in distances:
-                    # 同じ計算対象のペアは計算不要（同じ手首の指同士を想定）
+                    # 相同计算对象的配对无需计算（设想为同一手腕的手指之间）
                     continue
                     
                 if (from_alignment_idx < 0 or to_alignment_idx < 0) and (from_data_set_idx != to_data_set_idx or from_alignment_idx != to_alignment_idx * -1):
-                    # 床は自分自身とのみ調整
+                    # 地板仅与自身调整
                     continue
 
-                # 2点間の距離を算出
+                # 计算两点间的距离
                 distances[(from_data_set_idx, from_alignment_idx, to_data_set_idx, to_alignment_idx)] \
                     = org_from_global_effector_vec.distanceToPoint(org_to_global_effector_vec)
 
             logger.test("fno: %s, distances: %s", fno, distances)
             
             for (from_data_set_idx, from_alignment_idx, to_data_set_idx, to_alignment_idx), distance in distances.items():
-                # 距離を2点間の比率の平均から比率として求める
+                # 由两点间比率的平均值求出距离比率
                 org_palm_mean = np.mean([self.target_links[from_data_set_idx][from_alignment_idx].ratio, self.target_links[to_data_set_idx][to_alignment_idx].ratio])
                 distance_ratio = distance / org_palm_mean
 
-                # 基準距離（床は床位置合わせの距離が入ってる）
+                # 基准距离（地板的情况下存放的是地板位置对齐的距离）
                 base_distance = self.target_links[to_data_set_idx][to_alignment_idx].distance
-                # 基準距離以内か常に位置合わせを行うかの場合、位置合わせ処理実行
+                # 在基准距离以内或始终进行位置对齐的情况下，执行位置对齐处理
                 is_alignment = 0 < distance_ratio <= base_distance or base_distance == 10
 
                 logger.test("f: %s, (%s,%s,%s,%s): org_palm_mean: %s, distance: %s, distance_ratio: %s, base_distance: %s, is_alignment: %s", fno, from_data_set_idx, from_alignment_idx, \
                             to_data_set_idx, to_alignment_idx, org_palm_mean, distance, distance_ratio, base_distance, is_alignment)
                 
-                # 優先順位・距離をキーにして、INDEXの組合せを登録
+                # 以优先级、距离为键注册INDEX组合
                 priority = self.target_links[to_data_set_idx][to_alignment_idx].priority
                 if priority not in all_distances[fno]:
                     all_distances[fno][priority] = {}
@@ -314,16 +314,16 @@ cdef class ArmAlignmentService:
                         all_is_alignment[(to_data_set_idx, to_alignment_idx)][fno] = is_alignment or all_is_alignment[(to_data_set_idx, to_alignment_idx)][fno]
 
             if fno // 500 > prev_block_fno:
-                logger.count("位置合わせ準備②", fno, fnos)
+                logger.count("位置对齐准备②", fno, fnos)
                 prev_block_fno = fno // 500
 
-        logger.count("位置合わせ準備②", fno, fnos)
+        logger.count("位置对齐准备②", fno, fnos)
 
         all_alignment_group_list = []
         prev_block_fno = 0
 
-        # 優先順位が高いもの、同優先順位では距離の近いものからINDEXの組合せを登録
-        # 基本的には全部の中心点を算出するが、それぞれのモデルの両手のみが近かった場合を想定
+        # 从优先级高的开始注册INDEX组合，同优先级则按距离由近到远注册
+        # 基本上计算所有中心点，但也设想了各模型仅双手接近的情况
         for fidx, fno in enumerate(all_distances.keys()):
             is_alignment_by_priority = False
             for priority in sorted(all_distances[fno].keys()):
@@ -331,52 +331,52 @@ cdef class ArmAlignmentService:
                 for distance_ratio in sorted(all_distances[fno][priority].keys()):
                     for from_data_set_idx, from_alignment_idx, to_data_set_idx, to_alignment_idx, is_alignment in all_distances[fno][priority][distance_ratio]:
                         is_alignment_by_priority = is_alignment_by_priority or is_alignment
-                        # 前回の位置合わせ
+                        # 上一次的位置对齐
                         prev_from_alignment = False if fidx == 0 else all_is_alignment[(from_data_set_idx, from_alignment_idx)][list(all_distances.keys())[fidx - 1]]
                         prev_to_alignment = False if fidx == 0 else all_is_alignment[(to_data_set_idx, to_alignment_idx)][list(all_distances.keys())[fidx - 1]]
 
-                        # 処理対象データセット
+                        # 处理对象数据集
                         from_data_set = self.options.data_set_list[from_data_set_idx]
                         to_data_set = self.options.data_set_list[to_data_set_idx]
-                        # 処理対象
+                        # 处理对象
                         from_target_link = self.target_links[from_data_set_idx][from_alignment_idx]
                         to_target_link = self.target_links[to_data_set_idx][to_alignment_idx]
 
-                        # 首が上半身よりも大体上の場合、座ってる可能性（床位置合わせ可）
+                        # 颈部大致高于上半身时，可能是坐着（可进行地板位置对齐）
                         is_sit = all_org_global_neck_vec[fno][(to_data_set_idx, to_alignment_idx)].y() * 1.2 > all_org_global_upper_vec[fno][(to_data_set_idx, to_alignment_idx)].y()
 
                         if (from_data_set_idx, from_target_link.effector_bone_name[0]) in alignment_pairs or \
                                 (to_data_set_idx, to_target_link.effector_bone_name[0]) in alignment_pairs:
-                            # 既にその方向の位置合わせが発生している場合、位置合わせOFF
+                            # 该方向已发生位置对齐时，关闭位置对齐
                             continue
                             
-                        # 位置合わせする方向
+                        # 进行位置对齐的方向
                         alignment_pairs.append((from_data_set_idx, from_target_link.effector_bone_name[0]))
                         alignment_pairs.append((to_data_set_idx, to_target_link.effector_bone_name[0]))
 
                         if is_alignment:
-                            # 首根元が床に近い場合、寝転んでる可能性が高いので位置合わせ不要
-                            # 位置合わせする場合
+                            # 颈根接近地板时，很可能是在躺着，因此无需位置对齐
+                            # 进行位置对齐时
 
-                            # 前回既に位置合わせが必要であった場合、そのINDEXを使用する
+                            # 上一次已需要位置对齐时，使用该INDEX
                             if prev_from_alignment and (from_data_set_idx, from_target_link.effector_bone_name[0]) in all_alignment_idx and \
                                     all_alignment_idx[(from_data_set_idx, from_target_link.effector_bone_name[0])] >= 0:
-                                # FROM前回が位置合わせONの場合、FROMに寄せる
+                                # FROM上一次位置对齐为ON时，向FROM靠拢
                                 alignment_idx = all_alignment_idx[(from_data_set_idx, from_target_link.effector_bone_name[0])]
                             elif prev_to_alignment and (to_data_set_idx, to_target_link.effector_bone_name[0]) in all_alignment_idx and \
                                     all_alignment_idx[(to_data_set_idx, to_target_link.effector_bone_name[0])] >= 0:
-                                # FROMが前回位置合わせOFFで、前回TOがONの場合、TOに寄せる
+                                # FROM上一次位置对齐为OFF、且上一次TO为ON时，向TO靠拢
                                 alignment_idx = all_alignment_idx[(to_data_set_idx, to_target_link.effector_bone_name[0])]
                             # elif (prev_floor_left_alignment or now_floor_left_alignment) and (to_data_set_idx, -1) in all_alignment_idx \
                             #         and all_alignment_idx[(to_data_set_idx, -1)] >= 0 and is_sit:
-                            #     # 前回の左床位置合わせがONの場合、左に寄せる
+                            #     # 上一次左侧地板位置对齐为ON时，向左靠拢
                             #     alignment_idx = all_alignment_idx[(to_data_set_idx, -1)]
                             # elif (prev_floor_right_alignment or now_floor_right_alignment) and (to_data_set_idx, -2) in all_alignment_idx \
                             #         and all_alignment_idx[(to_data_set_idx, -2)] >= 0 and is_sit:
-                            #     # 前回の右床位置合わせがONの場合、右に寄せる
+                            #     # 上一次右侧地板位置对齐为ON时，向右靠拢
                             #     alignment_idx = all_alignment_idx[(to_data_set_idx, -2)]
                             elif not prev_from_alignment and not prev_to_alignment and (to_alignment_idx >= 0 or (to_alignment_idx < 0 and is_sit)):
-                                # FROMもTOも前回位置合わせOFFの場合、新たに発行
+                                # FROM与TO上一次位置对齐均为OFF时，新发行一个
                                 all_alignment_group_list.append({
                                     "fnos": [], "alignment_idxs": {}, "org_fno_global_effector": {}, \
                                     "org_mean_vec": {}, "org_origin_matrix": {}, "rep_fno_global_effector": {}, \
@@ -385,7 +385,7 @@ cdef class ArmAlignmentService:
                                 })
                                 alignment_idx = len(all_alignment_group_list) - 1
 
-                                # 位置合わせIDXを設定
+                                # 设置位置对齐IDX
                                 all_alignment_idx[(from_data_set_idx, from_target_link.effector_bone_name[0])] = alignment_idx
                                 all_alignment_idx[(to_data_set_idx, to_target_link.effector_bone_name[0])] = alignment_idx
                             else:
@@ -397,7 +397,7 @@ cdef class ArmAlignmentService:
                                 all_alignment_group_list[alignment_idx]["fnos"].append(fno)
 
                             # 方向
-                            # キーフレ単位の情報（1-2, 2-3 とかあるので、同じキーフレに複数の情報の可能性あり）
+                            # 以关键帧为单位的信息（存在1-2、2-3等情况，同一关键帧可能有多个信息）
                             if fno not in all_alignment_group_list[alignment_idx]["alignment_idxs"]:
                                 all_alignment_group_list[alignment_idx]["alignment_idxs"][fno] = []
                                 
@@ -407,7 +407,7 @@ cdef class ArmAlignmentService:
                             if (to_data_set_idx, to_alignment_idx) not in all_alignment_group_list[alignment_idx]["alignment_idxs"][fno]:
                                 all_alignment_group_list[alignment_idx]["alignment_idxs"][fno].append((to_data_set_idx, to_alignment_idx))
                                 
-                            # キーフレ単位のエフェクタ位置情報
+                            # 以关键帧为单位的末端效应器位置信息
                             if fno not in all_alignment_group_list[alignment_idx]["org_fno_global_effector"]:
                                 all_alignment_group_list[alignment_idx]["org_fno_global_effector"][fno] = {}
                                 
@@ -417,26 +417,26 @@ cdef class ArmAlignmentService:
                             all_alignment_group_list[alignment_idx]["org_fno_global_effector"][fno][(to_data_set_idx, to_alignment_idx)] \
                                 = all_org_global_effector_vec[fno][(to_data_set_idx, to_alignment_idx)].data()
 
-                            # # ブロック単位のエフェクタ位置情報（とりあえず全部まとめて）
+                            # # 以块为单位的末端效应器位置信息（暂且全部汇总）
                             # all_alignment_group_list[alignment_idx]["org_block_global_effector"].append(\
                             #     all_org_global_effector_vec[fno][(from_data_set_idx, from_alignment_idx)].data())
                             # all_alignment_group_list[alignment_idx]["org_block_global_effector"].append(\
                             #     all_org_global_effector_vec[fno][(to_data_set_idx, to_alignment_idx)].data())
 
-                            # 各キーフレにおける距離情報保持
+                            # 保持各关键帧的距离信息
                             if fno not in all_messages:
                                 all_messages[fno] = []
 
-                            # ログ用情報保持
-                            all_messages[fno].append("○近接あり: f: {0}({1}-{2}:{3}-{4}), 境界: {5}".format(fno, \
+                            # 保持日志用信息
+                            all_messages[fno].append("○存在接近: f: {0}({1}-{2}:{3}-{4}), 边界: {5}".format(fno, \
                                                      (from_data_set_idx + 1), from_target_link.effector_display_bone_name, \
                                                      (to_data_set_idx + 1), to_target_link.effector_display_bone_name, round(distance_ratio, 5)))
 
-                            # 対象である場合、一旦登録
+                            # 若为对象，先注册
                             for ik_links in from_target_link.ik_links_list:
                                 for link_name in ik_links.all().keys():
                                     bf = from_data_set.motion.calc_bf(link_name, fno)
-                                    logger.test("f: %s(%s:%s), 初回確定 now[%s], org[%s]", fno, (from_data_set_idx + 1), link_name, bf.rotation.toEulerAngles().to_log(), \
+                                    logger.test("f: %s(%s:%s), 初次确定 now[%s], org[%s]", fno, (from_data_set_idx + 1), link_name, bf.rotation.toEulerAngles().to_log(), \
                                                 bf.org_rotation.toEulerAngles().to_log())
                                     bf.org_rotation = bf.rotation.copy()
                                     from_data_set.motion.regist_bf(bf, link_name, fno)
@@ -444,98 +444,98 @@ cdef class ArmAlignmentService:
                             for ik_links in to_target_link.ik_links_list:
                                 for link_name in ik_links.all().keys():
                                     bf = to_data_set.motion.calc_bf(link_name, fno)
-                                    logger.test("f: %s(%s:%s), 初回確定 now[%s], org[%s]", fno, (to_data_set_idx + 1), link_name, bf.rotation.toEulerAngles().to_log(), \
+                                    logger.test("f: %s(%s:%s), 初次确定 now[%s], org[%s]", fno, (to_data_set_idx + 1), link_name, bf.rotation.toEulerAngles().to_log(), \
                                                 bf.org_rotation.toEulerAngles().to_log())
                                     bf.org_rotation = bf.rotation.copy()
                                     to_data_set.motion.regist_bf(bf, link_name, fno)
                             break
                         else:
                             if base_distance < distance_ratio <= base_distance * 3:
-                                # 基準距離に近い場合、情報だけ保持
-                                # 各キーフレにおける距離情報保持
+                                # 接近基准距离时，仅保持信息
+                                # 保持各关键帧的距离信息
                                 if fno not in all_messages:
                                     all_messages[fno] = []
 
-                                # ログ用情報保持
-                                all_messages[fno].append("－近接なし: f: {0}({1}-{2}:{3}-{4}), 境界: {5}".format(fno, \
+                                # 保持日志用信息
+                                all_messages[fno].append("－无接近: f: {0}({1}-{2}:{3}-{4}), 边界: {5}".format(fno, \
                                                          (from_data_set_idx + 1), from_target_link.effector_display_bone_name, \
                                                          (to_data_set_idx + 1), to_target_link.effector_display_bone_name, round(distance_ratio, 5)))
 
                 if is_alignment_by_priority:
-                    # 前の優先順位で既に位置合わせが発生している場合、終了
+                    # 上一优先级已发生位置对齐时，结束
                     break
 
             if fno // 500 > prev_block_fno:
-                logger.count("位置合わせ準備③", fno, fnos)
+                logger.count("位置对齐准备③", fno, fnos)
                 prev_block_fno = fno // 500
         
-        logger.count("位置合わせ準備③", fno, fnos)
+        logger.count("位置对齐准备③", fno, fnos)
 
         prev_block_fno = 0
 
-        # グループ単位で中央値
+        # 以组为单位取中央值
         for group_idx, all_alignment_group in enumerate(all_alignment_group_list):
-            # # ブロック単位の中央値
+            # # 以块为单位的中央值
             # org_block_mean_vec = MVector3D(np.mean(all_alignment_group["org_block_global_effector"], axis=0))
 
             logger.debug("group_idx: %s, fnos: %s, alignment_idxs: %s", group_idx, all_alignment_group["fnos"], \
                          [all_alignment_group["alignment_idxs"][fno] for fno in all_alignment_group["fnos"]])
 
             for fno in all_alignment_group["fnos"]:
-                # キーフレ単位の中央値
+                # 以关键帧为单位的中央值
                 org_fno_mean_vec = MVector3D(np.mean(list(all_alignment_group["org_fno_global_effector"][fno].values()), axis=0))
 
-                # 床との位置合わせがある場合、TRUE
+                # 与地板存在位置对齐时，TRUE
                 is_floor = ([ai < 0 for (di, ai) in all_alignment_group["alignment_idxs"][fno]].count(True) > 0)
                 
-                # キーフレ単位の床位置
+                # 以关键帧为单位的地板位置
                 if is_floor:
                     org_fno_mean_vec.setY(MVector3D(np.min(list(all_alignment_group["org_fno_global_effector"][fno].values()), axis=0)).y())
 
                 for data_set_idx, alignment_idx in all_alignment_group["alignment_idxs"][fno]:
-                    # 処理対象データセット
+                    # 处理对象数据集
                     data_set = self.options.data_set_list[data_set_idx]
-                    # 処理対象
+                    # 处理对象
                     target_link = self.target_links[data_set_idx][alignment_idx]
 
-                    # 首根元（体幹の最終的な向き）までの行列
+                    # 到颈根（躯干的最终朝向）的矩阵
                     org_trunk_matrix = all_org_global_trunk_matrixs[fno][(data_set_idx, alignment_idx)].copy()
 
-                    # エフェクタのグローバル位置
+                    # 末端效应器的全局位置
                     org_global_effector = all_org_global_effector_vec[fno][(data_set_idx, alignment_idx)]
 
-                    # 体幹から見たキーフレ中央値のローカル位置
+                    # 从躯干看到的关键帧中央值的局部位置
                     org_trunk_local_fno_origin = org_trunk_matrix.inverted() * org_fno_mean_vec
 
-                    # # 体幹から見たブロック中央値のローカル位置
+                    # # 从躯干看到的块中央值的局部位置
                     # org_trunk_local_block_origin = org_trunk_matrix.inverted() * org_block_mean_vec
 
-                    # # ローカルYはブロック中央値を採用
+                    # # 局部Y采用块的中央值
                     # org_trunk_local_fno_origin.setY(org_trunk_local_block_origin.y())
 
-                    # 作成元中点のローカル座標系
+                    # 源中点的局部坐标系
                     org_origin_matrix = org_trunk_matrix.copy()
 
-                    # 作成元中点のローカル座標とする
+                    # 作为源中点的局部坐标
                     org_origin_matrix.translate(org_trunk_local_fno_origin)
                 
-                    # 再生成した元中央値
+                    # 重新生成的源中央值
                     org_mean_vec = MVector3D(org_trunk_matrix * org_trunk_local_fno_origin)
 
                     if target_link.tip_ik_links:
-                        # 指先のグローバル位置
+                        # 指尖的全局位置
                         org_global_tip = all_org_global_tip_vec[fno][(data_set_idx, alignment_idx)]
 
-                        # 体幹から見たエフェクタ（手首）のローカル位置
+                        # 从躯干看到的末端效应器（手腕）的局部位置
                         org_trunk_local_fno_effector = org_trunk_matrix.inverted() * org_global_effector
 
-                        # 作成元エフェクタのローカル座標系
+                        # 源末端效应器的局部坐标系
                         org_effector_matrix = org_trunk_matrix.copy()
 
-                        # 作成元エフェクタのローカル座標とする
+                        # 作为源末端效应器的局部坐标
                         org_effector_matrix.translate(org_trunk_local_fno_effector)
 
-                        # 指先のエフェクタ座標系から見たローカル位置
+                        # 从指尖的末端效应器坐标系看到的局部位置
                         org_local_tip = org_effector_matrix.inverted() * org_global_tip
 
                         all_alignment_group["org_local_tip"][(fno, data_set_idx, alignment_idx)] = org_local_tip
@@ -571,10 +571,10 @@ cdef class ArmAlignmentService:
                     # data_set.motion.bones[debug_bone_name][fno] = debug_bf
 
             if fno // 500 > prev_block_fno:
-                logger.count("位置合わせ準備④", fno, fnos)
+                logger.count("位置对齐准备④", fno, fnos)
                 prev_block_fno = fno // 500
 
-        logger.count("位置合わせ準備④", fno, fnos)
+        logger.count("位置对齐准备④", fno, fnos)
 
         return all_alignment_group_list, all_messages
     
@@ -600,24 +600,24 @@ cdef class ArmAlignmentService:
         prev_block_fno = 0
         for all_alignment_group in all_alignment_group_list:
             group_data_set_idxs = []
-            logger.debug("■グループ切り替え -------------------")
+            logger.debug("■切换组 -------------------")
 
             for fno in all_alignment_group["fnos"]:
                 for data_set_idx, alignment_idx in all_alignment_group["alignment_idxs"][fno]:
-                    # 処理対象データセット
+                    # 处理对象数据集
                     data_set = self.options.data_set_list[data_set_idx]
-                    # 処理対象
+                    # 处理对象
                     target_link = self.target_links[data_set_idx][alignment_idx]
 
                     if (data_set_idx, alignment_idx) not in group_data_set_idxs:
-                        # 処理対象セットを保持
+                        # 保持处理对象集
                         group_data_set_idxs.append((data_set_idx, alignment_idx))
 
                     # 先モデルのそれぞれのグローバル位置
                     rep_global_3ds, rep_global_matrixs = \
                         MServiceUtils.c_calc_global_pos(data_set.rep_model, target_link.rep_links, data_set.motion, fno, return_matrix=True, is_local_x=True, limit_links=None)
 
-                    # キーフレ単位のエフェクタ位置情報
+                    # 以关键帧为单位的末端效应器位置信息
                     if fno not in all_alignment_group["rep_fno_global_effector"]:
                         all_alignment_group["rep_fno_global_effector"][fno] = {}
                     all_alignment_group["rep_fno_global_effector"][fno][(data_set_idx, alignment_idx)] = rep_global_3ds[target_link.effector_bone_name].data()
@@ -626,7 +626,7 @@ cdef class ArmAlignmentService:
                         all_alignment_group["rep_fno_fileset_ratio"][fno] = {}
                     all_alignment_group["rep_fno_fileset_ratio"][fno][(data_set_idx, alignment_idx)] = data_set.original_xz_ratio
 
-                    # キーフレ単位の体幹座標系情報
+                    # 以关键帧为单位的躯干坐标系信息
                     if fno not in all_alignment_group["rep_fno_trunk_matrix"]:
                         all_alignment_group["rep_fno_trunk_matrix"][fno] = {}
                     all_alignment_group["rep_fno_trunk_matrix"][fno][(data_set_idx, alignment_idx)] = rep_global_matrixs["首根元"]
@@ -643,17 +643,17 @@ cdef class ArmAlignmentService:
                     # 位置合わせメッセージ出力
                     [logger.info(msg) for msg in all_messages[fno]]
 
-                # 床との位置合わせがある場合、TRUE
+                # 与地板存在位置对齐时，TRUE
                 is_floor = ([ai < 0 for (di, ai) in all_alignment_group["alignment_idxs"][fno]].count(True) > 0)
-                # 他データとの位置合わせ（床との組合せは除く）がある場合、TRUE
+                # 与其他数据存在位置对齐（不含与地板的组合）时，TRUE
                 is_multi = len(set([di for (di, ai) in all_alignment_group["alignment_idxs"][fno]])) > 1 and not is_floor
 
-                # キーフレ単位の中央値
+                # 以关键帧为单位的中央值
                 rep_fno_mean_vec = MVector3D(np.mean(list(all_alignment_group["rep_fno_global_effector"][fno].values()), axis=0))
                 # rep_fno_mean_vec = MVector3D(np.average(list(all_alignment_group["rep_fno_global_effector"][fno].values()), \
                 #                                         weights=list(all_alignment_group["rep_fno_fileset_ratio"][fno].values()), axis=0))
 
-                # キーフレ単位の床位置
+                # 以关键帧为单位的地板位置
                 if is_floor:
                     rep_fno_mean_vec.setY(MVector3D(np.min(list(all_alignment_group["org_fno_global_effector"][fno].values()), axis=0)).y())
 
@@ -661,9 +661,9 @@ cdef class ArmAlignmentService:
                     if alignment_idx < 0:
                         continue
 
-                    # 処理対象データセット
+                    # 处理对象数据集
                     data_set = self.options.data_set_list[data_set_idx]
-                    # 処理対象
+                    # 处理对象
                     target_link = self.target_links[data_set_idx][alignment_idx]
 
                     # 首根先（体幹の最終的な向き）までの行列
@@ -796,7 +796,7 @@ cdef class ArmAlignmentService:
                                 is_avoidance_elbow_x = is_avoidance_elbow_x or (bf.avoidance == "x" and "ひじ" in link_name)
                             
                     if is_avoidance_elbow_x:
-                        logger.info("--ひじX方向回避済みのため、位置合わせスキップ: f: %s(%s-%s)", fno, (data_set_idx + 1), target_link.effector_display_bone_name)
+                        logger.info("--因已规避肘X方向，跳过位置对齐: f: %s(%s-%s)", fno, (data_set_idx + 1), target_link.effector_display_bone_name)
                         continue
 
                     if is_avoidance_arm_x:
@@ -974,18 +974,18 @@ cdef class ArmAlignmentService:
             # 結果チェック
             for fidx, fno in enumerate(all_alignment_group["fnos"]):
 
-                # 床との位置合わせがある場合、TRUE
+                # 与地板存在位置对齐时，TRUE
                 is_floor = ([ai < 0 for (di, ai) in all_alignment_group["alignment_idxs"][fno]].count(True) > 0)
-                # 他データとの位置合わせ（床との組合せは除く）がある場合、TRUE
+                # 与其他数据存在位置对齐（不含与地板的组合）时，TRUE
                 is_multi = len(set([di for (di, ai) in all_alignment_group["alignment_idxs"][fno]])) > 1 and not is_floor
 
                 for data_set_idx, alignment_idx in all_alignment_group["alignment_idxs"][fno]:
                     if (fno, data_set_idx, alignment_idx) in results and not results[(fno, data_set_idx, alignment_idx)]:
                         # 位置合わせに失敗した場合
 
-                        # 処理対象データセット
+                        # 处理对象数据集
                         data_set = self.options.data_set_list[data_set_idx]
-                        # 処理対象
+                        # 处理对象
                         target_link = self.target_links[data_set_idx][alignment_idx]
 
                         overwrited = []
@@ -1076,9 +1076,9 @@ cdef class ArmAlignmentService:
             # 指先位置合わせ
             for fidx, fno in enumerate(all_alignment_group["fnos"]):
 
-                # 床との位置合わせがある場合、TRUE
+                # 与地板存在位置对齐时，TRUE
                 is_floor = ([ai < 0 for (di, ai) in all_alignment_group["alignment_idxs"][fno]].count(True) > 0)
-                # 他データとの位置合わせ（床との組合せは除く）がある場合、TRUE
+                # 与其他数据存在位置对齐（不含与地板的组合）时，TRUE
                 is_multi = len(set([di for (di, ai) in all_alignment_group["alignment_idxs"][fno]])) > 1 and not is_floor
 
                 for data_set_idx, alignment_idx in all_alignment_group["alignment_idxs"][fno]:
@@ -1086,9 +1086,9 @@ cdef class ArmAlignmentService:
                         # 位置合わせそのものが成功していない場合、スルー
                         continue
 
-                    # 処理対象データセット
+                    # 处理对象数据集
                     data_set = self.options.data_set_list[data_set_idx]
-                    # 処理対象
+                    # 处理对象
                     target_link = self.target_links[data_set_idx][alignment_idx]
 
                     if target_link.tip_ik_links:
@@ -1517,7 +1517,7 @@ cdef class ArmAlignmentService:
         logger.info("【No.%s】%sモデルの%s手のひら頂点INDEX: %s (%s)", (data_set_idx + 1), target_model_type, direction, \
                     model.wrist_entity_vertex[direction].index, model.wrist_entity_vertex[direction].position.to_log())
 
-    # 処理対象データセットINDEX取得
+    # 处理对象数据集INDEX取得
     def get_target_set_idxs(self):
         target_data_set_idxs = []
         for data_set_idx, data_set in enumerate(self.options.data_set_list):

@@ -1,7 +1,15 @@
 from setuptools import Extension
-from numpy import get_include   # cimport numpy を使うため
+from numpy import get_include   # 为了使用 cimport numpy
+import os
+import site
 
-bezier_path = 'C:/Development/Anaconda3/envs/vmdsizing_cython/Lib/site-packages/bezier/include'
+# bezier 的 wheel 版本不附带 C 头文件（include 目录）。
+# 本项目只使用 Python 层的 bezier.Curve API，因此只需把 site-packages 加入头文件搜索路径即可。
+try:
+    _sp = site.getsitepackages()
+    bezier_path = next((p for p in _sp if os.path.isdir(os.path.join(p, "bezier"))), _sp[0])
+except Exception:
+    bezier_path = os.getcwd()
 
 kwargs = {"output_dir": "./build/output", "build_dir": "./build/"}
 
