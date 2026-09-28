@@ -50,7 +50,7 @@ class MainFrame(wx.Frame):
             self,
             parent,
             id=wx.ID_ANY,
-            title="VMD适配 本地版 {0}".format(self.version_name),
+            title="VMD Sizing {0}".format(self.version_name),
             pos=wx.DefaultPosition,
             size=wx.Size(600, 650),
             style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
