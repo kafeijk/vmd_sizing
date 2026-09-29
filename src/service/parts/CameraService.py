@@ -249,7 +249,7 @@ class CameraService:
                 - rep_inner_square_poses[(top_data_set_idx, top_bone_name)][1]
             )
 
-            # 以上下取得的组合的全长比例为基础调整距离
+            # 以上下取得的组合的身高比例为基础调整距离
             length_unit = (
                 (
                     (
@@ -1006,14 +1006,14 @@ class CameraService:
         head_ratio = rep_face_length / org_face_length
 
         logger.info(
-            "【No.%s】源模型 全长: %s, 头身: %s, 脸部大小: %s",
+            "【No.%s】源模型 身高: %s, 头身: %s, 脸部大小: %s",
             (data_set_idx + 1),
             round(org_total_height, 5),
             round(org_heads, 5),
             round(org_face_length, 5),
         )
         logger.info(
-            "【No.%s】目标模型 全长: %s, 头身: %s, 脸部大小: %s, Y偏移: %s",
+            "【No.%s】目标模型 身高: %s, 头身: %s, 脸部大小: %s, Y偏移: %s",
             (data_set_idx + 1),
             round(rep_total_height, 5),
             round(rep_heads, 5),
@@ -1035,7 +1035,7 @@ class CameraService:
     def calc_ratio(self, data_set_idx: int, model: PmxModel, model_type: str, camera_offset_y: float):
         if model.head_top_vertex.index < 0:
             logger.warning(
-                "【No.%s】未找到%s模型的头顶顶点INDEX，因此用头部骨骼＋上半身一半的位置代替。\n" + "用全长Y偏移调整头顶位置，可减少相机画面被裁切等情况。",
+                "【No.%s】未找到%s模型的头顶顶点INDEX，因此用头部骨骼＋上半身一半的位置代替。\n" + "用身高Y偏移调整头顶位置，可减少相机画面被裁切等情况。",
                 (data_set_idx + 1),
                 model_type,
             )

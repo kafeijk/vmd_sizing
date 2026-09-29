@@ -23,7 +23,7 @@ class CameraPanel(BasePanel):
         self.header_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.description_txt = wx.StaticText(self.header_panel, wx.ID_ANY, u"可以与骨骼动作的适配同时进行所指定相机动作的适配。\n" \
-                                             + "全长Y偏移可指定偏移量，用于调整映入相机的目标模型的全长。", wx.DefaultPosition, wx.DefaultSize, 0)
+                                             + "身高Y偏移可指定偏移量，用于调整映入相机的目标模型的身高。", wx.DefaultPosition, wx.DefaultSize, 0)
         self.header_sizer.Add(self.description_txt, 0, wx.ALL, 5)
 
         self.static_line01 = wx.StaticLine(self.header_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL)
@@ -221,13 +221,13 @@ class CameraSet():
 
         self.offset_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.camera_offset_y_txt = wx.StaticText(self.window, wx.ID_ANY, u"全长Y偏移", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.camera_offset_y_txt = wx.StaticText(self.window, wx.ID_ANY, u"身高Y偏移", wx.DefaultPosition, wx.DefaultSize, 0)
         self.camera_offset_y_txt.Wrap(-1)
         self.offset_sizer.Add(self.camera_offset_y_txt, 0, wx.ALL, 5)
 
         # 偏移Y控件
         self.camera_offset_y_ctrl = wx.SpinCtrlDouble(self.window, id=wx.ID_ANY, size=wx.Size(100, -1), value="0.0", min=-1000, max=1000, initial=0.0, inc=0.1)
-        self.camera_offset_y_ctrl.SetToolTip(u"可指定偏移量，用于调整映入相机的目标模型的全长。\n" \
+        self.camera_offset_y_ctrl.SetToolTip(u"可指定偏移量，用于调整映入相机的目标模型的身高。\n" \
                                              + "发饰等“想排除头顶以上物体”的情况，请指定负值。\n" \
                                              + "呆毛等“想包含头顶以上物体”的情况，请指定正值。")
         self.camera_offset_y_ctrl.Bind(wx.EVT_MOUSEWHEEL, lambda event: self.frame.on_wheel_spin_ctrl(event, 0.2))

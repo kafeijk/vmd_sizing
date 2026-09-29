@@ -178,7 +178,7 @@ class BulkPanel(BasePanel):
                     "中心XZ补正(0:无效、1:有效)", "上半身补正(0:无效、1:有效)", "下半身补正(0:无效、1:有效)", "足IK补正(0:无效、1:有效)", "脚尖补正(0:无效、1:有效)", \
                     "脚尖IK补正(0:无效、1:有效)", "肩部补正(0:无效、1:有效)", "中心Y补正(0:无效、1:有效)", "扭转分散(0:无、1:有)", "表情替换(源:目标:大小;)", "接触规避(0:无、1:有)", \
                     "接触规避刚体(刚体名;)", "手腕位置对齐(0:无、1:有)", "手指位置对齐(0:无、1:有)", "地面位置对齐(0:无、1:有)", "手腕距离", "手指距离", "与地面距离", \
-                    "跳过手臂检查(0:无、1:有)", "整体移动量补正值", "足IK偏移值", "相机动作VMD(完整路径、仅分组第1条)", "距离可动范围", "相机源模型PMX(完整路径)", "全长Y偏移"]
+                    "跳过手臂检查(0:无、1:有)", "整体移动量补正值", "足IK偏移值", "相机动作VMD(完整路径、仅分组第1条)", "距离可动范围", "相机源模型PMX(完整路径)", "身高Y偏移"]
         
         output_path = os.path.join(os.path.dirname(self.frame.file_panel_ctrl.file_set.motion_vmd_file_ctrl.path()), f'批量适配数据_{datetime.now():%Y%m%d_%H%M%S}.csv')
 
@@ -318,7 +318,7 @@ class BulkPanel(BasePanel):
                 org_camera_motion_result, org_camera_motion_path = self.read_csv_row(rows, row_no, 25, "相机动作VMD", False, str, None, None, (".vmd"))
                 camera_length_result, camera_length_datas = self.read_csv_row(rows, row_no, 26, "距离可动范围", False, float, r"^[1-9]\d*\.?\d*", "1以上", None)
                 org_camera_model_result, org_camera_model_path = self.read_csv_row(rows, row_no, 27, "相机源模型PMX", False, str, None, None, (".pmx"))
-                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "全长Y偏移", False, float, None, None, None)
+                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "身高Y偏移", False, float, None, None, None)
                 
                 result = result & group_no_result & org_motion_result & org_model_result & rep_model_result & stance_center_xz_result \
                     & stance_upper_result & stance_lower_result & stance_leg_ik_result & stance_toe_result & stance_toe_ik_result & stance_shoulder_result \
@@ -547,7 +547,7 @@ class BulkPanel(BasePanel):
                 org_camera_motion_result, org_camera_motion_path = self.read_csv_row(rows, row_no, 25, "相机动作VMD", False, str, None, None, (".vmd"))
                 camera_length_result, camera_length_datas = self.read_csv_row(rows, row_no, 26, "距离可动范围", False, float, None, None, None)
                 org_camera_model_result, org_camera_model_path = self.read_csv_row(rows, row_no, 27, "相机源模型PMX", False, str, None, None, (".pmx"))
-                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "全长Y偏移", False, float, None, None, None)
+                camera_y_offset_result, camera_y_offset_datas = self.read_csv_row(rows, row_no, 28, "身高Y偏移", False, float, None, None, None)
                 
                 if now_motion_idx == 0:
                     # 清空多人面板
