@@ -103,7 +103,7 @@ class ArmPanel(BasePanel):
 
         # 手指位置对齐
         self.arm_alignment_finger_flg_ctrl = wx.CheckBox(self, wx.ID_ANY, u"按手指位置进行位置对齐", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.arm_alignment_finger_flg_ctrl.SetToolTip(u"勾选后，可针对手指TUT等动作，以手指之间的距离为基准调整手腕位置。" \
+        self.arm_alignment_finger_flg_ctrl.SetToolTip(u"勾选后，可针对 Finger Tutting（手指舞）等动作，以手指之间的距离为基准调整手腕位置。" \
                                                       + "多人动作时保持关闭状态效果更佳。")
         self.arm_alignment_finger_flg_ctrl.Bind(wx.EVT_CHECKBOX, self.on_check_arm_process_alignment)
         self.alignment_option_sizer.Add(self.arm_alignment_finger_flg_ctrl, 0, wx.ALL, 5)
